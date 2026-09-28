@@ -70,9 +70,9 @@ node bin/cae.mjs unlock --config .cae/desktop/config.json
 
 ## Jev shadow（显式启用）
 
-此入口已完成离线接线验证，**桌面真实 Jev 传输尚未验收**。独立判断器的 8 个真实合成样例结果见 [Jev 验收记录](JEV_SHADOW_ACCEPTANCE.md)，不能替代桌面链路验收。
+此入口已完成离线接线验证和桌面首轮实测：**三条主请求均保持原档位并完成，但两条 Jev 判断超时，稳定性未通过**。逐条结果及此前独立判断器的 8 个真实合成样例见 [Jev 验收记录](JEV_SHADOW_ACCEPTANCE.md)。
 
-下面是后续真实验收的启动命令，本次开发未执行。先正常停止旧实验实例；通过自己的正常方式在启动终端提供 `TYPESAFE_API_KEY`，不要把值放到命令参数中。只在新实例的新本地会话中使用无敏感的合成任务：
+下面保留真实验收的启动命令。先正常停止旧实验实例；通过自己的正常方式在启动终端提供 `TYPESAFE_API_KEY`，不要把值放到命令参数中。只在新实例的新本地会话中使用无敏感的合成任务：
 
 ```bash
 node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \

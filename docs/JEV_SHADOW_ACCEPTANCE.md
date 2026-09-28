@@ -1,6 +1,28 @@
 # Jev 固定合成样例 shadow 验收
 
-状态：**离线准备和一批真实 Jev 协议验收通过，合成样例语义观察已审阅；桌面真实 Jev 传输尚未验收。** 此阶段只测试判断器，不启动执行模型、不改变桌面设置。后续已实现 [桌面 Jev shadow 显式开关](DESKTOP_LAUNCHER.md)，188 项离线测试通过，默认仍使用 baseline；不能把离线接线等同于桌面真实判断验收。
+状态：**独立判断器的固定样例协议验收通过；桌面真实链路已完成首轮，但 Jev 稳定性未通过。** 桌面三条主请求均以原 medium 正常完成，只有一条及时返回 Jev 建议，两条超过 1500 ms 后回退。详见下节；不进入自动改档验收。[桌面开关](DESKTOP_LAUNCHER.md)默认仍使用 baseline，显式 Jev 入口只允许 off/shadow。
+
+## 桌面首轮：部分通过（2026-09-28 14:02:10–14:03:30 +08:00）
+
+被测源码 `4e4dfd4d6232f11b5975604fcb815b9aea6dca3d`，本机 188 项离线测试通过；[对应 CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36384188894) 六项组合全部通过。环境仍为 macOS 27 arm64、Node v24.16.0、桌面 26.924.22138 / build 11645、CLI 0.158.0-alpha.2.1。真实桌面结果独立于这些离线测试。
+
+用户主动启动新实验实例，并按给定的三个无敏感文本任务依次发送、等待完成：拼写修改、虚构调度器并发分析、同会话“继续”边界分析。开始时读取状态确认 running、provider=cae、typesafe、shadowOnly=true、judgeCalls=0/8；完成后为 3/8、activeRequests=0、无锁档、未触发熔断。桌面操作完成由用户报告；下表按本次窗口内三条主模型请求的时序对应，使用 CAE 的 requestId 在本地关联决策/发送/完成，不读取原生任务正文或公开会话标识。
+
+| 顺序 / 用户测试 | Jev 结果 | 判断耗时 ms | 发送档位 | 传输结果 |
+|---|---|---|---|---|
+| 1 / 拼写修改 | judge_timeout；source=fallback，无有效 Jev 建议 | 1506 | medium → medium，changed=false | HTTP 200，response.completed |
+| 2 / 并发分析 | source=judge，建议 high，lease=1，诊断 confidence=0.49 | 1174 | medium → medium，changed=false | HTTP 200，response.completed |
+| 3 / 中文“继续” | judge_timeout；source=fallback，无有效 Jev 建议 | 1502 | medium → medium，changed=false | HTTP 200，response.completed |
+
+另有一条客户端发出的 `gpt-5.6-luna` / low 请求，因 different_model 原样旁路，HTTP 200 且完成，没有调用 Jev。未查询其任务正文，不断言用途；这不是 CAE 自动换模型。合计 4 次上游发送/完成、0 次改档，3 次 Jev 尝试、1 次及时返回、2 次超时。没有为了补齐结果自动重试或扩大预算。
+
+已知 Jev 输入用量仅成功样例的 945 token；两次超时的用量未知，仍可能计费。现有桌面元数据日志未保留 Jev 的响应模型版本和输出用量，因此本轮两项都记未知；不能沿用前一批的 `jev-1.13.0` 和输出用量来填充。fallback 的 proposedEffort=medium 是保留来请求的结果，不能当作 Jev 建议。
+
+**通过：** 新实例接入 CAE、真实 Jev 返回能进入决策、shadow 保持原请求档位、超时保留原档位且主请求完成、其他模型旁路。**未通过：** 三种任务均能及时获得真实 Jev 建议，因而也未完整验证简单任务和短中文跟进在桌面上下文中的判断。**未测试：** 自动改档、稳定延迟分布、质量/费用收益、此实例的停止恢复和剩余预算耗尽。
+
+当前最优先阻碍是 **1500 ms 预算下 Jev 未稳定返回**。两次超时不能定位为服务端推理、连接或网络中的某一项；现有计时覆盖整个评估，没有阶段拆分。下一步应先定位超时来源，不直接放宽生产超时或以重跑覆盖失败，也不切换 auto。采集结束时实例保持 running/shadow，未停止或重配；剩余 5 次是运行上限，不表示已执行或一定不会计费。
+
+原始证据仅留 `.cae/desktop/events.jsonl`，不提交。本节公开内容不含原始请求标识、私有路径、账号或任务正文。
 
 ## 真实运行结果（2026-09-28 13:46:48–13:46:52 +08:00）
 
@@ -87,4 +109,4 @@ node scripts/jev-shadow.mjs --capabilities capabilities.local.json \
 
 退出：Ctrl+C / SIGTERM 中止当前判断并写出已完成部分，剩余样例停止。该程序不启动代理或桌面，不更改任何配置，不需要恢复日常进程。原始输出和预览为被忽略的 `*.local.json`，不要提交；只把脱敏结论追加到本报告。
 
-后续桌面 Jev shadow 的显式开关已实现，隔离实例的真实传输验收待执行；更晚才开展自动改档与完整任务质量对照。
+后续桌面 Jev shadow 的显式开关已实现，隔离实例真实首轮结果见开头：传输及回退通过，判断超时稳定性未通过。自动改档与完整任务质量对照仍未开展。
