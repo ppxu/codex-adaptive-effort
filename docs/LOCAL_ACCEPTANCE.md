@@ -202,6 +202,28 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+### 受控桌面 Jev auto 入口（2026-09-28 14:41–14:42 +08:00）
+
+用户在 shadow 验收后明确同意推进自动改档。以源码基线 `6867006fd349c0103df07ce28c605a1b32f5c2cc` 加本节同提交的补丁验证；此前基线 [CI 36386991432](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36386991432) 成功，新提交 CI 必须另查，不能沿用。只增加桌面启动的 `--allow-jev-auto` 权限入口，复用已有控制器，不修改判断器、超时或模型传输实现。
+
+- 本机 macOS 27.0 arm64、Node v24.16.0，官方桌面 26.924.22138 / build 11645。实际 CLI 为 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`，版本 `codex-cli 0.158.0-alpha.2.1`。
+- `npm ci --ignore-scripts`、`npm run verify` 退出码均为 0；197 测试通过，0 失败/取消/跳过，32 模块语法、JSON 和五阶段离线演示通过。新增两项回归覆盖开关约束、重启恢复权限，以及模拟 Jev 经真实本机 HTTP/SSE 的 low/high 改档、只改 effort、未知档位/超时/次数耗尽回退、off 和不兼容请求字节不变、较小预算保留、密钥不进入原生子进程和日志。
+- 开发中首次新增测试在同端口重启后复用已关闭客户端连接，出现 ECONNRESET；测试请求使用 `Connection: close` 后通过。该调整仅限测试夹具，没有修改实际模型或 Jev 连接池，也没有跳过失败项。
+- 14:41:57 的真实 doctor/probe 均退出 0；model/list 中 `gpt-6-astra` 默认 medium，支持 low/medium/high/xhigh/max/ultra。没有执行生成，原始能力捕获仅留本机忽略文件。
+- 14:42 启动独立真实桌面实例：running、effectiveProvider=cae、bridgeChecks=2、connected=true、judgeKind=typesafe、shadowOnly=false，初始 shadow。随后 `control auto` 成功，lockedEffort=null、judgeCalls=0/8、activeRequests=0；未发起新的 Jev 或执行模型生成。已建立仅含合成说明的独立本机测试目录。
+- **已通过：** 最小入口、完整离线测试、真实能力查询、签名/版本/provider 预检、真实实例启动和 auto 控制切换。**未测试：** 本入口的真实 Jev 建议改写及后续上游完成、本实例最终停止恢复。**仍未解决：** 旧批次两次 Jev 超时根因，不据此扩大时限或宣称日常稳定性。
+
+被测运行文件 SHA-256：
+
+| 文件 | SHA-256 |
+|---|---|
+| src/desktop.mjs | d501e06bf5b857720d2c4613a55d26ff6fc1c339aa4865b47c96e4c03d643a6e |
+| bin/cae.mjs | b3225c94fa8fb715f082710d408a16aaf9fa82279cab9ca0c8325b4e8d06948c |
+
+下一步为 [两条真实 auto 验收步骤](DESKTOP_LAUNCHER.md#jev-auto受控实验)：在新实例的新本地会话保留 medium，依次发送无工具的拼写修改和虚构并发分析；按 requestId 关联 source=judge、changed、实际 sent effort 和 completed。仅建议与来请求档位不同且发送档位与建议一致时，才记为自动改档通过，页面选择器无需随之变化。完成或错误后 `node bin/cae.mjs control off --config .cae/desktop/config.json`，检查元数据，再 `node bin/cae.mjs desktop stop`。不读登录文件，不改全局配置、审批、沙箱或服务档；当前实例保留供用户手动发送样例。
+
+### 此前阶段
+
 桌面 Jev 超时的阶段观测已补齐并通过 195 项离线测试，详见 [诊断记录](JEV_SHADOW_ACCEPTANCE.md)。使用原生 fetch 诊断事件，不改变连接池、请求、超时或重试；本轮未新增真实调用，原有两次超时根因仍待采样定位。
 
 随后用户在新实例完成首条真实分段样本：Jev 795 ms 返回 low，发送前 461.2 ms、请求发完至响应头 315.6 ms；实际保持 medium 并正常完成。该样本证明计时生效，没有复现超时，不能用于确认原有两次超时的根因；复杂任务和短跟进的真实分段数据仍待采集。

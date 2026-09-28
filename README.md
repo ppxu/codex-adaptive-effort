@@ -2,7 +2,7 @@
 
 **固定执行模型，动态调整思考强度。** 这是面向本地 Codex 的实验性开源控制器，设计借鉴 Astra-Ares 的固定模型/决策生命周期，以及 Jev Codex Router 的本地代理/有限判断摘要。
 
-**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面自动判断、正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
+**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面自动改档、正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
 
 [English](README.en.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
 
@@ -49,7 +49,7 @@ node bin/cae.mjs desktop status
 node bin/cae.mjs desktop stop
 ```
 
-首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。新增 `--enable-jev` 可显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；桌面首轮三条主请求均保持原档位并完成，但两条 Jev 超时，判断稳定性仍未通过。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
+首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。`--enable-jev` 显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；另外添加 `--allow-jev-auto` 才允许随后通过 `control auto` 开始实验性自动改档。第二组三条桌面 shadow 请求均成功，首轮两次超时的原因仍未知；自动改档的真实验收待完成。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
 
 先读 [LOCAL_VALIDATION.md](docs/LOCAL_VALIDATION.md)，按「原版 → off → 手动 auto → Jev shadow → Jev auto」逐级验证。**这不是默认启用的桌面兼容承诺。** 首版提供可撤销的 CLI 路径验证代理；本机独立桌面实例已通过启动、纯文本 off/手动锁档及取消恢复，见 [桌面检查记录](docs/DESKTOP_ACCEPTANCE.md)。
 

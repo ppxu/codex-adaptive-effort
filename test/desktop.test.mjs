@@ -6,12 +6,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer, createConnection } from 'node:net';
+import http from 'node:http';
 import { once } from 'node:events';
 import { defaultConfig } from '../src/config.mjs';
 import { codexArgs } from '../src/codex.mjs';
 import { CaeError } from '../src/util.mjs';
 import { startProxy } from '../src/proxy.mjs';
-import { eventually } from './helpers.mjs';
+import { eventually, body, completedSse } from './helpers.mjs';
 import { DESKTOP_ARGS, TESTED_DESKTOP, checkDesktopVersion, validateDesktopCapabilities, validateDesktopConfig,
   verifyDesktopProvider, selectDescendants, parseProcessRows, startDesktop, desktopControl, desktopSocket } from '../src/desktop.mjs';
 const fixture = fileURLToPath(new URL('./fixtures/desktop-config.mjs', import.meta.url));
@@ -202,4 +203,106 @@ test('desktop Jev respects stricter existing timeout and budget and preserves of
   assert.equal(runtime.judge.maxCalls, 2); assert.equal(runtime.judge.timeoutMs, 100);
   assert.equal(desktop.state().mode, 'off'); assert.equal(desktop.state().judgeCalls, 0);
   await desktop.stop(); await desktop.done;
+});
+
+test('desktop auto opt-in requires Jev, is start-only, and never permits auto startup', async t => {
+  const s = await setup(t), deps = dependencies();
+  deps.inspect = () => assert.fail('must reject before native inspection');
+  await assert.rejects(startDesktop({ ...s.options, allowJevAuto: true }, deps), /desktop_auto_requires_jev/);
+  deps.env = {};
+  await assert.rejects(startDesktop({ ...s.options, enableJev: true, allowJevAuto: true }, deps), /missing_typesafe_key/);
+  for (const [args, error] of [
+    [['desktop', 'start', '--auth', 'chatgpt', '--enable-upstream'], 'desktop_auto_requires_jev'],
+    [['desktop', 'status'], 'desktop_auto_start_only'],
+    [['serve'], 'desktop_auto_start_only'],
+    [['desktop', 'start', '--auth', 'chatgpt', '--enable-upstream', '--enable-jev'], 'missing_typesafe_key'],
+  ]) {
+    const cli = spawnSync(process.execPath, ['bin/cae.mjs', ...args, '--allow-jev-auto'],
+      { encoding: 'utf8', env: { ...process.env, TYPESAFE_API_KEY: '' } });
+    assert.equal(cli.status, 1); assert.equal(cli.stderr.trim(), 'CAE: ' + error);
+  }
+  assert.throws(() => validateDesktopConfig({ ...s.c, mode: 'auto' }, { enableJev: true, allowJevAuto: true }), /off_or_shadow/);
+});
+
+test('desktop auto opt-in changes only effort over HTTP, preserves fallback/off bytes and resets permission on restart', async t => {
+  const s = await setup(t), deps = dependencies(); let calls = 0, runtime, spawnedEnv;
+  s.c.mode = 'off'; s.c.judge.maxCalls = 4; s.c.judge.timeoutMs = 100;
+  writeFileSync(s.path, JSON.stringify(s.c)); const original = readFileSync(s.path, 'utf8');
+  const received = [], events = [], responseBytes = completedSse();
+  const upstream = http.createServer(async (req, res) => {
+    const chunks = []; for await (const chunk of req) chunks.push(chunk);
+    received.push({ bytes: Buffer.concat(chunks), headers: req.headers });
+    res.writeHead(200, { 'content-type': 'text/event-stream' }); res.end(responseBytes);
+  });
+  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+  t.after(() => { upstream.closeAllConnections(); return new Promise(r => upstream.close(r)); });
+  deps.env = { ...process.env, TYPESAFE_API_KEY: 'synthetic-auto-key' };
+  const spawnApp = deps.spawnApp;
+  deps.spawnApp = (...args) => { spawnedEnv = args[2].env; return spawnApp(...args); };
+  deps.startProxy = (c, opts) => {
+    runtime = c;
+    // Only the test substitutes an upstream; no synthetic request can leave loopback.
+    return startProxy({ ...c, upstream: { kind: 'mock', baseUrl: `http://127.0.0.1:${upstream.address().port}/v1` } },
+      { ...opts, emit: event => { events.push(event); opts.emit(event); } });
+  };
+  deps.judgeFetch = async (_url, request) => {
+    ++calls;
+    assert.equal(request.headers.authorization, 'Bearer synthetic-auto-key');
+    if (calls === 4) return new Promise((_resolve, reject) => request.signal.addEventListener('abort',
+      () => reject(new Error('synthetic timeout')), { once: true }));
+    return new Response(JSON.stringify({ answers: { effort: { choice: ['low', 'high', 'ultra'][calls - 1] }, lease: { choice: '1' } } }));
+  };
+  const desktop = await startDesktop({ ...s.options, enableJev: true, allowJevAuto: true }, deps);
+  t.after(() => desktop.stop());
+  await desktopControl(s.path, 'bridge-ready'); await eventually(() => desktop.state().phase === 'running', 3000);
+  assert.equal(desktop.state().shadowOnly, false); assert.equal(desktop.state().mode, 'off');
+  assert.equal(calls, 0); assert.equal(runtime.judge.maxCalls, 4); assert.equal(runtime.judge.timeoutMs, 100);
+  assert.equal(spawnedEnv.TYPESAFE_API_KEY, undefined);
+  const base = `http://127.0.0.1:${s.c.port}`;
+  // This test deliberately restarts the listener on the same port; do not reuse its old client socket.
+  const headers = { 'x-cae-token': 'a'.repeat(64), 'content-type': 'application/json', authorization: 'Bearer synthetic-executor', connection: 'close' };
+  const control = async mode => {
+    const response = await fetch(base + '/control', { method: 'POST', headers, body: JSON.stringify({ mode }) });
+    assert.equal(response.status, 200); return response.json();
+  };
+  const b = body({ reasoning: { effort: 'medium', summary: 'auto' } });
+  const raw = '  ' + JSON.stringify(b, null, 2) + '\n';
+  const request = async (bytes = raw) => {
+    const response = await fetch(base + '/v1/responses', { method: 'POST', headers, body: bytes });
+    assert.equal(response.status, 200); assert.deepEqual(Buffer.from(await response.arrayBuffer()), responseBytes);
+    await eventually(() => desktop.state().activeRequests === 0);
+    return received.at(-1).bytes.toString();
+  };
+  assert.equal(await request(), raw); assert.equal(calls, 0);
+  await control('auto');
+  for (const effort of ['low', 'high']) {
+    const sent = JSON.parse(await request());
+    assert.equal(sent.reasoning.effort, effort);
+    sent.reasoning.effort = 'medium'; assert.deepEqual(sent, b);
+    assert.equal(events.filter(e => e.event === 'request_sent').at(-1).changed, true);
+    assert.equal(received.at(-1).headers.authorization, 'Bearer synthetic-executor');
+    assert.equal(received.at(-1).headers['x-cae-token'], undefined);
+  }
+  for (const value of [{ ...b, model: 'other-model' }, { ...b, previous_response_id: 'synthetic-history' }]) {
+    const bytes = JSON.stringify(value, null, 2); assert.equal(await request(bytes), bytes);
+  }
+  assert.equal(calls, 2);
+  for (const reason of ['judge_invalid_choice', 'judge_timeout', 'judge_call_budget']) {
+    assert.equal(await request(), raw);
+    const decision = events.filter(e => e.event === 'decision').at(-1);
+    assert.equal(decision.source, 'fallback'); assert.equal(decision.reason, reason);
+  }
+  assert.equal(calls, 4);
+  await control('shadow'); await control('off'); await control('auto');
+  assert.equal(desktop.state().judgeCalls, 4); assert.equal(await request(), raw);
+  await control('off'); assert.equal(await request(), raw); assert.equal(calls, 4);
+  assert.equal(readFileSync(s.path, 'utf8'), original);
+  await desktop.stop(); await desktop.done;
+  const next = await startDesktop({ ...s.options, enableJev: true }, deps); t.after(() => next.stop());
+  assert.equal(next.state().shadowOnly, true); assert.equal(next.state().mode, 'off');
+  const rejected = await fetch(base + '/control', { method: 'POST', headers, body: JSON.stringify({ mode: 'auto' }) });
+  assert.equal(rejected.status, 400); assert.equal((await rejected.json()).error.code, 'shadow_only_control');
+  await next.stop(); await next.done;
+  const log = readFileSync(join(s.dir, 'events.jsonl'), 'utf8');
+  assert(!log.includes('synthetic-auto-key')); assert(!log.includes('synthetic-executor')); assert(!log.includes(b.input[0].content));
 });

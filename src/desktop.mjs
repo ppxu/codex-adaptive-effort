@@ -167,6 +167,7 @@ export async function startDesktop(options, dependencies = {}) {
   const verify = dependencies.verify ?? verifyDesktopProvider;
   if (!options.enableUpstream) throw new CaeError('upstream_not_enabled');
   if (options.auth !== 'chatgpt') throw new CaeError('desktop_requires_chatgpt_route');
+  if (options.allowJevAuto && !options.enableJev) throw new CaeError('desktop_auto_requires_jev');
   if (options.enableJev && !environment.TYPESAFE_API_KEY?.trim()) throw new CaeError('missing_typesafe_key');
   const configPath = resolve(options.configPath), dir = dirname(configPath);
   const app = await inspect(options.appPath);
@@ -250,7 +251,8 @@ export async function startDesktop(options, dependencies = {}) {
     await preflight;
     if (stopping) throw new CaeError('desktop_start_cancelled');
     audit = new Audit(c.logFile);
-    proxy = await (dependencies.startProxy ?? startProxy)(c, { token, judge, allowUpstream: true, shadowOnly: options.enableJev === true,
+    proxy = await (dependencies.startProxy ?? startProxy)(c, { token, judge, allowUpstream: true,
+      shadowOnly: options.enableJev === true && options.allowJevAuto !== true,
       emit: record => audit.emit(record), auditHealthy: () => !audit.failed });
     if (stopping) { await proxy.close(); throw new CaeError('desktop_start_cancelled'); }
     const userData = join(dir, 'desktop-user-data'), bridge = join(dir, 'desktop-bridge');

@@ -109,7 +109,7 @@ JS
 
 日志是追加式的，核对本次启动时间范围，不把旧实验结果算作本次验收。后续真实验收可用新纯文本会话依次测试：明确拼写修改、虚构并发问题分析、带前文的“继续”；核对 source=judge、建议档位、changed=false 与对应完成结果。发现错误先 off，再 stop，保留脱敏元数据，不自动重试。
 
-首轮两次 Jev 超时后，已增加发送/响应头/正文/校验阶段计时，见 [超时诊断说明](JEV_SHADOW_ACCEPTANCE.md)。新字段仅在重启后的代码中生效，旧日志不可追溯补齐；`report` 会按最后观测阶段汇总超时。195 项离线测试通过，真实分段样本待采集，超时仍为最多 1500 ms。
+首轮两次 Jev 超时后，已增加发送/响应头/正文/校验阶段计时，见 [超时诊断说明](JEV_SHADOW_ACCEPTANCE.md)。新字段仅在重启后的代码中生效，旧日志不可追溯补齐；`report` 会按最后观测阶段汇总超时。第二组三条真实分段样本为 795/552/591 ms，均成功，旧超时未复现、原因未知；超时仍为最多 1500 ms。
 
 退出与恢复：
 
@@ -127,6 +127,43 @@ stop 成功后也可直接回到日常官方桌面；没有全局配置需要恢
 基线 `c23877e180d5aa64da5c4f27a44b3fa5f68f0b33` 加本节所在功能提交的源码变更，macOS 27 arm64 / Node v24.16.0。`npm run verify` 通过：188 测试、0 失败/取消/跳过，30 模块语法和 JSON 检查、离线演示通过。覆盖显式开关/缺少密钥、进程级配置不落盘、HTTP 控制拒绝 auto/锁档、请求和 SSE 字节不变、调用上限/较小预算/超时、off 保留与重启回 baseline、原生子进程密钥隔离、脱敏日志及已有退出清理回归。Jev 与模型响应均为合成测试；本轮真实外部调用 0，未启动真实桌面 Jev 实例。
 
 13:57:18 +08:00 使用修改后的 doctor/probe 再次查询本机内置 CLI：两者退出码均为 0，CLI 仍为 `0.158.0-alpha.2.1`，`gpt-6-astra` 默认 medium，支持 low/medium/high/xhigh/max/ultra；没有发起生成。原始能力捕获与测试日志只留本机被忽略文件。
+
+## Jev auto（受控实验）
+
+在用户明确同意实际修改请求档位后，停止旧实验实例，在正常提供独立 Jev 环境变量的终端启动：
+
+```bash
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \
+  --enable-upstream --enable-jev --allow-jev-auto
+```
+
+新增开关只开放本进程的 auto/手动控制权限，不自动切模式，不落盘。必须同时指定 `--enable-jev`；启动配置仍须为 shadow/off，磁盘配置为 auto 时继续拒绝启动。已验证的应用签名、CLI 版本、实际能力、provider 预检和子进程密钥隔离完全保留。仅带原有 Jev 开关重启后恢复 shadowOnly=true；省略两个 Jev 开关则回到磁盘的 baseline 配置。
+
+在另一终端确认 running、固定模型正确、judgeKind=typesafe、shadowOnly=false、judgeCalls=0、activeRequests=0，然后切换：
+
+```bash
+node bin/cae.mjs desktop status
+node bin/cae.mjs control auto --config .cae/desktop/config.json
+```
+
+预期 mode=auto、lockedEffort=null，最多 8 次判断、每次最多 1500 ms；更小的既有配置继续有效，模式切换不刷新次数。建议不合法、超时或次数耗尽时继续沿用既有控制器的回退规则；显式来请求档位保持不变，未指定档位才使用已核对的 baseline。不支持的请求历史和其他模型仍原样旁路。
+
+用独立无敏感目录，在实验窗口中新建本地会话，选择实际探针返回的 `gpt-6-astra` 和 medium，保持桌面选择不变，依次发送并等待完成：
+
+1. `不要使用任何工具。把字符串 Helo 改成 Hello，只回复修改后的字符串。`
+2. `不要使用工具。分析虚构调度器：A 被取消后 B 启动，A 的迟到回调覆盖 B 的状态。请给出错误时序、所有权不变量和最小修复方案。`
+
+按同一 requestId 关联本机 CAE 元数据：decision 应为 mode=auto、source=judge；建议不同于来请求 medium 时 changed=true，request_prepared/request_sent 的 effort 应与建议一致，随后 HTTP 200 且 response.completed。Jev 可能建议 medium 或超时，不能为得到预期 low/high 自动重试，也不能把未改档记为改档通过。桌面选择器可能继续显示 medium，它表示客户端选择；代理只修改发送请求的 effort。这项验证不证明服务端实际分配的推理量、任务质量或成本收益。
+
+完成两条后先暂停判断，再读取脱敏记录；出现错误也立即 off，不自动追加调用：
+
+```bash
+node bin/cae.mjs control off --config .cae/desktop/config.json
+node bin/cae.mjs report --config .cae/desktop/config.json
+node bin/cae.mjs desktop stop
+```
+
+off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 结果待采集；具体源码、离线验证和本机启动状态见 [本机记录](LOCAL_ACCEPTANCE.md)。
 
 ## 检查和失败行为
 
