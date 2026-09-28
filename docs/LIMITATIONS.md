@@ -25,6 +25,8 @@ The dated [local acceptance record](LOCAL_ACCEPTANCE.md) describes the tested ma
 
 Manual lock is instance-wide and only changes eligible `auto` requests. `off` and `shadow` never change effort, even with a lock set. To retain original execution without Jev cost use `off`; to remove the entire proxy from the path restart ordinary Codex.
 
+The [desktop launcher](DESKTOP_LAUNCHER.md) is limited to the validated macOS arm64 app/CLI combination. It shares the native Codex home, does not migrate old threads, and requires a new local thread to use the configured provider. Normal stop and terminal interruption are tested; forced supervisor death and stale socket recovery require manual inspection. No native UI title patch or packaged plugin is provided.
+
 A server process lifetime cap is not a spending guarantee. Services may bill requests that time out or are cancelled. No trial uses a real key unless the operator explicitly enables it.
 
 Release blockers for any stable claim: independent security review; real native CLI acceptance for both intended auth paths; packaged desktop integration and upgrade compatibility; long-session/compaction acceptance; low/normal/hard task comparisons including Chinese short follow-ups; actual quality, cache, latency and cost observations. Until then, treat this as a protocol-level alpha.

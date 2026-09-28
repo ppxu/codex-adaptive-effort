@@ -12,7 +12,7 @@ Project: Codex Adaptive Effort, experimental independent Node ESM implementation
 - Check actual remote/commit/CI state before claiming success. A connector without repo-creation capability cannot be represented as having created a repo.
 - An executor body may change only `reasoning.effort` for eligible auto requests. Unsupported shapes bypass without deleting history. All upstream response bytes remain unchanged.
 - Per-session transaction ownership, cancellation, stale revision rejection and completed-response lease commit must remain tested.
-- No invented quality, success probabilities, cache savings or cost savings. `configuration_update`, WebSocket and desktop integration are not implemented in this version.
+- No invented quality, success probabilities, cache savings or cost savings. `configuration_update`, WebSocket and a packaged desktop plugin are not implemented. The experimental desktop launcher is limited to its validated app/CLI version and new local threads; preserve its preflight and owned-process cleanup checks.
 
 ## Development
 

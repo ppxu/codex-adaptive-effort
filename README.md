@@ -40,6 +40,17 @@ node bin/cae.mjs doctor
 
 ## 本地 Codex 接入顺序
 
+已验收版本的 macOS arm64 桌面可直接使用实验启动器：
+
+```bash
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt --enable-upstream
+# 在另一终端检查或退出：
+node bin/cae.mjs desktop status
+node bin/cae.mjs desktop stop
+```
+
+首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
+
 先读 [LOCAL_VALIDATION.md](docs/LOCAL_VALIDATION.md)，按「原版 → off → 手动 auto → Jev shadow → Jev auto」逐级验证。**这不是默认启用的桌面兼容承诺。** 首版提供可撤销的 CLI 路径验证代理；本机独立桌面实例已通过启动、纯文本 off/手动锁档及取消恢复，见 [桌面检查记录](docs/DESKTOP_ACCEPTANCE.md)。
 
 仅查询本机 Codex 公布的模型/档位，不发起生成：

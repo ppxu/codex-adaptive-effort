@@ -19,6 +19,8 @@ Requires Node >=22.16. No third-party runtime dependencies. Verification uses sy
 
 An independent instance of the installed desktop app also passed off, plain-text low/high locks, cancellation and same-thread recovery after an app-server argument-scope fix. See [desktop acceptance](docs/DESKTOP_ACCEPTANCE.md). This covers its Codex programming surface, not ordinary ChatGPT chats or a packaged desktop plugin.
 
+The experimental macOS arm64 launcher provides `desktop start/status/stop`, fresh capability and effective-provider checks, and owned-process cleanup. It accepts only the documented application/CLI version, defaults to shadow + baseline, and does not enable Jev. Use a new local thread; existing threads retain their providers. See [launcher instructions](docs/DESKTOP_LAUNCHER.md).
+
 **Not established:** packaged desktop integration, other client/account environments, live Jev, long-session acceptance, Chinese classification quality, task quality equivalence, cache benefits or monetary savings. WebSockets, native patches and `configuration_update` insertion are not implemented. Compacted, incremental or multimodal histories bypass effort adaptation. Request-level effort changes may affect caching.
 
 See [Chinese quickstart](README.md), [local validation](docs/LOCAL_VALIDATION.md), [architecture](docs/ARCHITECTURE.md), [limits](docs/LIMITATIONS.md), [validation evidence](docs/VALIDATION.md) and [publication](docs/PUBLISHING.md).

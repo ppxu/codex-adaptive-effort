@@ -23,6 +23,8 @@ const HELP = `Codex Adaptive Effort 0.1.0-alpha.1 (Node >=22.16; no dependencies
   cae lock high / cae unlock               Explicit instance-wide lock
   cae codex --auth chatgpt|api -- [ARGS]     One-off launch, no config.toml writes
   cae launch-args --auth chatgpt|api         Print non-secret argv for inspection
+  cae desktop start --auth chatgpt --enable-upstream [--model ID]
+  cae desktop status / desktop stop        Isolated macOS desktop instance
   cae report                              Observed usage, not savings claims
 
 Shared: --config .cae/config.json; init: --dir .cae
@@ -49,9 +51,25 @@ async function main() {
       dir: { type: 'string', default: '.cae' }, model: { type: 'string' }, efforts: { type: 'string' },
       baseline: { type: 'string' }, auth: { type: 'string' }, capabilities: { type: 'string' },
       codex: { type: 'string', default: 'codex' }, 'enable-upstream': { type: 'boolean' }, 'enable-jev': { type: 'boolean' },
+      app: { type: 'string' },
     } });
   const command = p[0];
   if (!command || v.help) { print(HELP); return; }
+  if (command === 'desktop') {
+    if (p.length !== 2 || passthrough.length) throw new CaeError('desktop_invalid_arguments');
+    if (input.some(x => x === '--codex' || x.startsWith('--codex='))) throw new CaeError('desktop_uses_verified_bundled_cli');
+    const { startDesktop, desktopControl } = await import('../src/desktop.mjs');
+    const explicitConfig = input.some(x => x === '--config' || x.startsWith('--config='));
+    const configPath = explicitConfig ? v.config : '.cae/desktop/config.json';
+    if (p[1] === 'start') {
+      if (v['enable-jev']) throw new CaeError('desktop_jev_not_enabled');
+      const desktop = await startDesktop({ configPath, model: v.model, baseline: v.baseline, auth: v.auth,
+        enableUpstream: v['enable-upstream'], appPath: v.app, onState: print });
+      print(await desktop.done); return;
+    }
+    if (!['status', 'stop'].includes(p[1])) throw new CaeError('desktop_unknown_action');
+    print(await desktopControl(configPath, p[1], { timeoutMs: p[1] === 'stop' ? 15000 : 5000 })); return;
+  }
   if (command === 'doctor') { print(doctor(v.codex)); return; }
   if (command === 'probe') { print(await probeModels(v.codex)); return; }
   if (command === 'init') {
