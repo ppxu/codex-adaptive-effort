@@ -1,9 +1,42 @@
 # Contributing
 
-Run `npm run verify` before proposing changes. The test suite and demo are offline with synthetic inputs; they must not require credentials or contact paid providers. Preserve the fixed-model/auth/billing contract, full executor history, byte-transparent responses, cancellation and metadata-only logging.
+CAE is an experimental independent implementation. Focus contributions on small, reviewable improvements within the [documented scope](docs/LIMITATIONS.md). Use English for new public documentation, issues and pull requests where possible; keep the Chinese entry point consistent when user-facing behavior changes.
 
-New compatibility claims require a real, versioned acceptance record, not a mocked test. Record OS/architecture, exact Codex version, mode, authentication route, request shape and outcome without publishing credentials or task text. Node/macOS/Windows CI configuration is not itself a passed matrix.
+## Development setup
 
-Changes to configuration or decision semantics need a test for stale state, cancellation and failure. Never introduce an implicit API billing fallback, an arbitrary upstream URL, auth-file scraping, shell evaluation of generated commands, or unbounded Jev input. Keep third-party source provenance and notices if importing code in the future.
+```bash
+git clone https://github.com/ppxu/codex-adaptive-effort.git
+cd codex-adaptive-effort
+npm ci --ignore-scripts
+npm run verify
+```
 
-Report measured usage and unknowns separately. Do not convert a shorter output or valid route into a claim of equivalent task quality or observed savings.
+Use Node.js 22.16 or later. Runtime code is Node ESM with no third-party runtime dependencies. `verify` checks syntax and JSON, runs tests and executes the offline demo. Tests use synthetic inputs and local servers: no real credentials, model generation or paid provider requests. CI covers Node 22/24 on Linux, macOS and Windows.
+
+## Report a problem
+
+Search existing issues, then use the bug report template. Include the source commit, OS/architecture, Node and native app/CLI versions, mode, auth route name and sanitized error codes. Reproduce with synthetic text. A UI response alone does not prove that traffic traversed CAE; distinguish decisions, sends and completed outcomes.
+
+Never attach `.cae`, capability captures, dotenv files, raw native logs, auth files, keys, private paths or task histories. Follow [Security](SECURITY.md) for vulnerabilities instead of a public issue.
+
+## Submit a change
+
+1. Fork the repository or create a topic branch if you have write access.
+2. Keep each change focused; preserve existing user work and avoid unrelated refactors.
+3. Add a regression test for a confirmed defect. Keep provider calls mocked or on local test servers.
+4. Run `npm run verify` and review `git diff --check` and the files being staged.
+5. Update affected guides and the Unreleased changelog when behavior changes.
+6. Open a pull request describing the problem, resulting behavior, validation and remaining limits.
+
+There is no required commit-message convention. Prefer a short imperative summary. Passing CI is necessary evidence, not proof of native compatibility. Cite the exact commit and environment for any real acceptance claim; mark untested behavior explicitly.
+
+## Behavioral contract
+
+- Preserve the user-selected model, provider, auth route, service tier, approval policy and sandbox.
+- Only eligible auto requests may change `reasoning.effort`; preserve executor history and upstream response bytes.
+- Keep cancellation, per-session ownership, stale revision rejection and completed-response lease commits tested.
+- Default to shadow + baseline. Real Jev/model calls require explicit authorization and normal credentials.
+- Do not read native login files, retrieve secrets elsewhere, replace binaries, add implicit billing fallbacks or alter global Codex configuration.
+- Record known usage and unknowns separately. Do not infer quality equivalence or savings from effort changes.
+
+Read [AGENTS.md](AGENTS.md), [Architecture](docs/ARCHITECTURE.md), [Limitations](docs/LIMITATIONS.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before substantial work. Proposed third-party source imports must retain applicable licenses and provenance.

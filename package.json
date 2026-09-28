@@ -13,5 +13,20 @@
     "demo": "node scripts/demo.mjs",
     "verify": "npm run check && npm test && npm run demo"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppxu/codex-adaptive-effort.git"
+  },
+  "homepage": "https://github.com/ppxu/codex-adaptive-effort#readme",
+  "bugs": {
+    "url": "https://github.com/ppxu/codex-adaptive-effort/issues"
+  },
+  "keywords": [
+    "codex",
+    "reasoning-effort",
+    "local-proxy",
+    "jev",
+    "nodejs"
+  ]
 }

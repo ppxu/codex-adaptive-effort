@@ -1,26 +1,44 @@
-# Publishing the first public repository
+# Repository maintenance and publishing
 
-The source delivery is not proof that a remote exists. The connector used for initial development could read/write existing repositories but exposed no repository-creation action. No remote repository was created during that delivery.
+The canonical public repository already exists: [ppxu/codex-adaptive-effort](https://github.com/ppxu/codex-adaptive-effort), default branch `main`. The package remains private to npm (`private: true`); source availability is not an npm release or a desktop plugin release.
 
-On your own machine, install Git and GitHub CLI and use the normal `gh auth login` flow if necessary. Do not copy a token to chat. The helper only asks GitHub for the active login and repository metadata; it never prints an auth token.
+## Maintain the existing repository
 
-For the intended first owner:
+Use ordinary Git and pull requests. Do not run the first-publication script in this checkout.
 
 ```bash
-node scripts/publish-github.mjs --owner ppxu --dry-run
-node scripts/publish-github.mjs --owner ppxu --public
+git status --short
+git remote -v
+git rev-parse HEAD
+npm ci --ignore-scripts
+npm run verify
+git diff --check
 ```
 
-Dry run does not contact GitHub or mutate Git. Actual publication requires the public flag, a matching authenticated account, a positively observed 404 for the exact repository and a fresh source export without `.git`. It runs all offline tests before creating anything remotely. It stages only allowlisted source/docs/test files; runtime `.cae`, dotenv and capture files are excluded. A best-effort secret-pattern scan is an additional check, not a substitute for reviewing the source.
+Review the exact staged files. Exclude `.cae`, local capabilities, dotenv, logs, credentials, private paths and task histories. `scripts/publication.mjs` provides a source allowlist and best-effort secret scan; it is not a substitute for human review. Preserve existing uncommitted work.
 
-The new repository name is `codex-adaptive-effort`. The initial commit uses a generic contributor name and noreply address, not a private personal email. Publishing adds an origin remote locally and pushes main. The script does not delete existing repositories, force-push, set new global Git credentials or write provider secrets.
+After an authorized push, inspect CI for the exact source commit:
 
-The helper supports personal repositories with a login matching --owner; organization creation is deliberately not inferred. Running it in an existing Git history is refused to avoid publishing deleted secrets from history. After initial publication, maintain the project through normal Git commits and pull requests.
+```bash
+gh run list --commit "$(git rev-parse HEAD)"
+```
 
-## Failure recovery
+A successful push is not a successful CI run, and a previous commit's CI does not validate a new commit. Do not force-push or recreate the repository to resolve a publishing problem.
 
-If the script stops before `git init`, fix the reported precondition and rerun. If `.git` was already created, inspect `git status`, `git remote -v` and the actual GitHub repository state before taking another action. Do not delete a remote or force-push to make the script pass. A fresh extracted source copy may be used only after confirming no remote was created. If creation succeeded but push failed, push the reviewed local commit through normal authenticated Git after checking the exact remote.
+## Version and release policy
 
-If GitHub rejects workflow files because the local credential lacks workflow permission, keep the repository and report that limitation. Use the normal GitHub CLI permission/login flow chosen by the user, not manual token extraction. The script does not elevate scopes automatically.
+The current source version is `0.1.0-alpha.1`; ongoing changes are listed under Unreleased. Do not infer a Git tag, GitHub Release or npm publication from a changelog heading. A release is a separate maintainer decision that should identify the tested commit, relevant compatibility evidence and known limitations. This documentation update does not create a release.
 
-GitHub Actions is configured, not pre-verified: a successful local test or push does not establish a successful remote CI run. Verify public visibility, branch, commit SHA and workflow results separately.
+## Fresh exports only: legacy first-publication helper
+
+`scripts/publish-github.mjs` exists for an explicitly authorized, fresh source export without `.git`, targeting a new personal repository. It refuses existing history or an existing remote repository. It is not an update command.
+
+```bash
+node scripts/publish-github.mjs --owner YOUR_LOGIN --dry-run
+# Only for an explicitly requested new public repository from a fresh export:
+node scripts/publish-github.mjs --owner YOUR_LOGIN --public
+```
+
+Dry-run scans local publishable files without contacting GitHub or changing Git. Actual publication requires normal GitHub CLI authentication, a matching personal account and a confirmed missing target. The helper runs offline checks and does not extract tokens, change global credentials, delete repositories or force-push.
+
+If publication partially succeeds, inspect the local Git state and actual remote before continuing. Keep any created repository; resolve the remaining step with normal authenticated Git. Do not erase history or export credentials to work around a failure.

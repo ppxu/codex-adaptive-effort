@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const ROOTS = ['.github', 'bin', 'docs', 'examples', 'scripts', 'src', 'test'];
-const FILES = ['.gitignore', 'package.json', 'package-lock.json', 'README.md', 'README.en.md',
+const FILES = ['.gitignore', 'package.json', 'package-lock.json', 'README.md', 'README.en.md', 'README.zh-CN.md', 'CODE_OF_CONDUCT.md',
   'LICENSE', 'THIRD_PARTY_NOTICES.md', 'SECURITY.md', 'CONTRIBUTING.md', 'AGENTS.md', 'CODEX_START.md', 'CHANGELOG.md'];
 const EXTENSIONS = /(?:\.mjs|\.json|\.md|\.yml|\.yaml|\.txt|\.toml)$/;
 /** Inspect current source only; never read .cae, auth.json, dotenv or Git credentials. */

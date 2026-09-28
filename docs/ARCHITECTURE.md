@@ -1,7 +1,7 @@
 # Architecture / v0.1.0-alpha.1
 
 ```text
-Native Codex CLI (one-off custom provider settings, native auth)
+Native Codex CLI or guarded desktop bridge (native auth)
        |
        | HTTP Responses; optional SSE; native session header when present
        v
@@ -35,7 +35,7 @@ The executor retains every input item, encrypted reasoning item, instruction, to
 
 Media, existing configuration updates, standalone/in-history compaction and unknown server-side continuations bypass classification/adaptation. This is conservative gating, not support for every such native workflow. Standalone `/responses/compact` is forwarded but is not included in the generation usage report in this release.
 
-The adapter only supports HTTP/SSE, not WebSocket. Its explicit 426 prevents accidental claims of WebSocket compatibility. Generated CLI settings request Responses and disable WebSockets/retries; desktop clients and versions may still need an additional adapter. That work is open, not hidden inside the current release.
+The adapter only supports HTTP/SSE, not WebSocket. Its explicit 426 prevents accidental claims of WebSocket compatibility. Generated settings request Responses and disable WebSockets/retries. The guarded desktop launcher verifies these effective settings for the documented app/CLI combination; other versions and transports remain unvalidated. See [desktop setup](DESKTOP_LAUNCHER.md).
 
 ## Failure behavior
 

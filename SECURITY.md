@@ -18,6 +18,12 @@ Metadata-only audit files are 0600 on POSIX. Only explicitly allowlisted fields 
 
 Some unsupported histories bypass adaptation but still go to the original executor. `off` is not network isolation and still uses the proxy. If the proxy crashes, end the experimental session and relaunch ordinary Codex; there is no background config rewrite or automatic direct-routing promise.
 
-## Reporting
+## Supported versions
 
-Do not post keys, auth files, raw private requests or real session histories in public issues. Provide synthetic reproduction steps, versions, error codes and redacted metadata. For a credential exposure, rotate the affected key through its provider and remove the exposure through the repository's normal security process. Do not put a live credential into a test fixture.
+Security fixes are considered for the current main branch of this alpha. There is no long-term support commitment for older snapshots. Include the exact source commit and native client version when reporting a problem.
+
+## Reporting a vulnerability
+
+Use [GitHub private vulnerability reporting](https://github.com/ppxu/codex-adaptive-effort/security/advisories/new) for this repository. Do not open a public issue with exploit details or sensitive data. Include a synthetic reproduction, affected versions, impact and any suggested mitigation. If the private channel is unavailable, request a private contact method without disclosing the vulnerability publicly. No response-time guarantee is offered.
+
+Do not post keys, auth files, raw private requests or real session histories. For a credential exposure, rotate the affected key through its provider and remove the exposure through the relevant hosting service. Never put a live credential into a test fixture or security report.

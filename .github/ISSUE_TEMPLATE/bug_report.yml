@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible defect using synthetic, non-sensitive data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For security vulnerabilities, use the private reporting link in SECURITY.md.
+        Do not attach credentials, .cae, raw logs, capability captures, private paths or real task histories.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Source commit, OS/architecture, Node version, native CLI/app version, CAE mode and auth route name (no credentials).
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Synthetic reproduction
+      description: Minimal steps and non-sensitive input that reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+      description: Distinguish a recommendation from an actual send and a completed response.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Error codes, relevant metadata fields and test results. Do not paste raw requests or logs.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked existing issues and the documented limitations.
+          required: true
+        - label: This report contains only synthetic or reviewed, sanitized information.
+          required: true

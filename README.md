@@ -1,130 +1,101 @@
-# Codex Adaptive Effort（CAE）
+# Codex Adaptive Effort
 
-**固定执行模型，动态调整思考强度。** 这是面向本地 Codex 的实验性开源控制器，设计借鉴 Astra-Ares 的固定模型/决策生命周期，以及 Jev Codex Router 的本地代理/有限判断摘要。
+[![CI](https://github.com/ppxu/codex-adaptive-effort/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ppxu/codex-adaptive-effort/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js 22.16+](https://img.shields.io/badge/Node.js-%3E%3D22.16-339933.svg)](package.json)
 
-**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面 Jev 自动升档、降档与超时回退均已有真实通过样例，见 [auto 记录](docs/LOCAL_ACCEPTANCE.md)；正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
+**Keep your Codex model. Adapt its reasoning effort.**
 
-[English](README.en.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
+Codex Adaptive Effort (CAE) is an experimental local HTTP/SSE proxy that can change `reasoning.effort` for a fixed, user-selected model. It supports the Codex CLI and an isolated instance of the validated Codex desktop application. An optional TypeSafe Jev evaluator recommends effort levels from the model's actual capabilities.
 
-## 已实现
+[简体中文](README.zh-CN.md) · [Documentation](docs/README.md) · [Acceptance evidence](docs/LOCAL_ACCEPTANCE.md) · [Changelog](CHANGELOG.md)
 
-| 能力 | 本版行为 |
-|---|---|
-| 固定模型 | 只改已配置模型的 `reasoning.effort`，不自动切模型、服务商、速度档或计费渠道；用户选其他模型时透明旁路 |
-| 三种模式 | 默认 `shadow`：评估但不改请求；`auto`：应用已校验档位；`off`：不评估、不改档 |
-| Jev 判断 | TypeSafe System One 两个 Choice：思考强度、1–4 次生成的决策有效期；支持独立超时和调用次数上限 |
-| 状态控制 | 同会话单活动请求；只有成功完成的请求可建立有效期；新输入、错误、历史改写、手动控制或超时会使旧决策失效 |
-| 手动接管 | 本地认证控制接口，可锁档和取消锁档；只有 `auto` 模式实际改档，锁档不越过不兼容形态保护 |
-| 文本摘要 | Jev 只收到有界文本证据，不接收执行模型认证、加密思考或系统指令；执行模型的完整请求历史不被删减 |
-| 传输 | 只监听 `127.0.0.1`；本地随机令牌；Host/浏览器来源检查；HTTP/SSE 字节透传；不重试、不跟随重定向 |
-| 可观察性 | 建议、准备、发送、响应结果分开记录；Jev 调用和已知用量单独记录；缺失值为未知，不造节省比例 |
-| Codex 辅助 | `doctor`、原生 `model/list` 能力探针、一次性 CLI 启动参数；不修改日常 `config.toml` 或读取登录文件 |
+> **Alpha: `0.1.0-alpha.1`.** This is an independent project, not an official OpenAI or TypeSafe plugin. Desktop support is limited to the exact macOS/app/CLI combination documented below. Task quality, cost savings and production reliability are not established.
 
-**不实现：** WebSocket 代理、原生 Codex 补丁、自动桌面安装、`configuration_update` 注入、多模型路由、配额耗尽换渠道、完整缓存优化。含图片、未知增量上下文、压缩历史或已有配置更新的请求会旁路而不是盲猜。
+## What it does
 
-## 先离线运行（不需要任何模型密钥）
+| Feature | Behavior |
+| --- | --- |
+| Fixed execution model | Keeps the selected model, provider, auth route and service tier; other models bypass adaptation |
+| `off` | Forwards requests without evaluation or effort changes |
+| `shadow` (default) | Records recommendations while forwarding the original request |
+| `auto` | Applies a validated effort to eligible requests; preserves all other request fields |
+| Optional Jev evaluation | Sends a bounded text projection to TypeSafe; uses separate credentials and a call limit |
+| Safe fallback | Retains incoming effort on evaluator failure; unsupported histories bypass adaptation |
+| Local controls | Authenticated loopback controls, manual locks, cancellation and bounded decision reuse |
+| Evidence | Metadata-only decisions, actual send events and response completion; no invented savings |
 
-Node.js **22.16+**。运行代码没有第三方 npm 依赖，也没有安装脚本。
+The default evaluator is **baseline-only**, a transport test fixture rather than a complexity classifier. Live Jev processing must be explicitly enabled. CAE never rewrites global Codex configuration or reads native login files. Native Codex handles its own login.
+
+## Install from source
+
+Requires Node.js **22.16+**, Git and an existing Codex installation for native integration. There are no third-party runtime dependencies. The package is not published to npm; use the checked-out CLI directly.
 
 ```bash
+git clone https://github.com/ppxu/codex-adaptive-effort.git
+cd codex-adaptive-effort
 npm ci --ignore-scripts
 npm run verify
-```
-
-`verify` 会做语法检查、自动化测试、五阶段 HTTP/SSE 演示。演示启动的判断器和模型后端都是本地模拟；它证明接线与状态控制，不证明 Jev 判断准确度或真实节省。
-
-```bash
 node bin/cae.mjs --help
-node bin/cae.mjs doctor
 ```
 
-## 本地 Codex 接入顺序
+Verification uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24. Passing CI does not imply native integration on all these platforms.
 
-已验收版本的 macOS arm64 桌面可直接使用实验启动器：
+## Quick start: inspect capabilities
 
 ```bash
-node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt --enable-upstream
-# 在另一终端检查或退出：
+node bin/cae.mjs doctor
+node bin/cae.mjs probe > capabilities.local.json
+```
+
+These commands inspect the native CLI and query `model/list`; they do not generate model output. If Codex is not on `PATH`, pass `--codex /path/to/trusted/codex`. Select a real model ID and its supported effort values from the capture; do not assume every model supports every effort. Captures stay local and are ignored by Git.
+
+Continue with the [CLI validation guide](docs/LOCAL_VALIDATION.md) or the [desktop launcher guide](docs/DESKTOP_LAUNCHER.md).
+
+## Desktop trial
+
+Validated on **macOS 27.0 arm64**, **ChatGPT/Codex desktop 26.924.22138 (build 11645)** and its bundled **codex-cli 0.158.0-alpha.2.1**. The launcher checks the official application signature, exact version, current capabilities and effective provider. Other combinations are rejected pending validation; it does not install or replace native binaries.
+
+```bash
+# Replace MODEL_ID with an ID returned by your native probe.
+node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
+# In another terminal:
 node bin/cae.mjs desktop status
 node bin/cae.mjs desktop stop
 ```
 
-首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。`--enable-jev` 显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；另外添加 `--allow-jev-auto` 才允许随后通过 `control auto` 开始实验性自动改档。第二组三条桌面 shadow 请求均成功；后续 auto 实测完成 medium → high，另一次 Jev 超时后保持 medium。后续 2000 ms 实验以 665 ms 完成 medium → low；降档通过，放宽超时的改善效果与日常稳定性仍未证实。可显式添加 `--jev-timeout-ms 2000` 进行仅本进程生效的超时实验，默认仍为 1500 ms。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
+Use a **new local Codex chat** in the experimental window and a directory containing only non-sensitive test material. Existing chats retain their providers. The instance has separate Electron data but shares native Codex home and login. Ordinary ChatGPT conversations and cloud tasks are outside this integration.
 
-先读 [LOCAL_VALIDATION.md](docs/LOCAL_VALIDATION.md)，按「原版 → off → 手动 auto → Jev shadow → Jev auto」逐级验证。**这不是默认启用的桌面兼容承诺。** 首版提供可撤销的 CLI 路径验证代理；本机独立桌面实例已通过启动、纯文本 off/手动锁档及取消恢复，见 [桌面检查记录](docs/DESKTOP_ACCEPTANCE.md)。
+Starting the launcher does not submit a task. Sending a task uses the normal model allowance. The default is shadow + baseline. For real Jev evaluation, provide your own `TYPESAFE_API_KEY` through your normal environment setup and add `--enable-jev`:
 
-仅查询本机 Codex 公布的模型/档位，不发起生成：
+- `--enable-jev`: process-only Jev shadow; `auto` and manual locks remain disabled.
+- Add `--allow-jev-auto`: permits an explicit `control auto` after startup; it does not switch modes automatically.
+- Optional `--jev-timeout-ms 2000`: replaces the timeout for this process only. The default ceiling remains 1500 ms.
 
-```bash
-node bin/cae.mjs probe > capabilities.local.json
-```
+Desktop Jev trials allow at most eight evaluations per process. A timeout or cancellation may still incur provider usage. Read the [complete controls and recovery procedure](docs/DESKTOP_LAUNCHER.md) before enabling auto.
 
-选取探针实际返回的模型 ID，保留原有认证方式。使用 ChatGPT 订阅时：
+## Validation status
 
-```bash
-# MODEL_ID 必须替换为 probe 返回的真实 model 字段。
-node bin/cae.mjs init --auth chatgpt --model "$MODEL_ID" --capabilities capabilities.local.json
-```
+Real tests on the documented installation covered CLI transport, desktop off, manual low/high locks, cancellation/recovery, Jev shadow, automatic `medium → high`, automatic `medium → low`, and timeout fallback. The latest downshift took 665 ms with a 2000 ms limit; **this does not show that increasing the limit improves reliability**. Some earlier evaluations timed out, and their root cause remains unresolved.
 
-`.cae/` 是新建的隔离控制器目录；已存在时拒绝覆盖。它不是新的 Codex 登录目录。CAE 不打开 `auth.json`；原生 Codex 仍自行处理其正常登录。
+See [versioned acceptance evidence](docs/LOCAL_ACCEPTANCE.md) and [known limitations](docs/LIMITATIONS.md). WebSockets, packaged desktop plugins, `configuration_update`, automatic model routing and full cache optimization are not implemented. Structured tool-result, compacted, incremental or multimodal histories can bypass adaptation, including manual locks.
 
-在明确同意发起真实模型请求后，开两个终端：
+## Stop and restore
 
 ```bash
-# 终端 1：默认仍是 shadow + baseline-only，未接入 Jev。
-node bin/cae.mjs serve --enable-upstream
-
-# 终端 2：仅该子进程使用代理，不改日常 Codex 配置。
-node bin/cae.mjs codex --auth chatgpt --
+node bin/cae.mjs control off --config .cae/desktop/config.json
+node bin/cae.mjs desktop stop
 ```
 
-ChatGPT 路线已完成上述限定版本的 CLI 与独立桌面实例验收，不能外推到所有客户端版本或普通 ChatGPT 聊天。结构化工具结果的历史仍安全旁路，手动锁档也不越过该保护。出现认证/协议错误时停止接入、保留原版 Codex；不能通过导出 Cookie、拷贝网页凭证或改用 API 付费来假装修复。
+`off` still uses the proxy. Stop the experimental instance and return to ordinary Codex to leave the proxy path. No global configuration or login files need restoring. A proxy crash does not automatically switch to a direct connection.
 
-API 使用者须从初始化起明确选择 `--auth api`，再在自己的终端提供 `OPENAI_API_KEY`。两种路线不能混用，代码会检查。API 请求可能按量计费；此工具不把订阅额度转换成 API 额度。
+## Contribute and get help
 
-## 启用 Jev
+- Read [Contributing](CONTRIBUTING.md) before opening a pull request.
+- Use [Issues](https://github.com/ppxu/codex-adaptive-effort/issues) for bugs, questions and feature proposals with synthetic reproductions.
+- Follow [Security](SECURITY.md) for vulnerabilities; never attach credentials, raw logs or private task histories.
+- Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-建议先执行 [固定合成样例 shadow 验收](docs/JEV_SHADOW_ACCEPTANCE.md)：默认只预览，授权后最多 8 次 Jev 请求，不发起 Codex 生成。它用于验证真实判断器；桌面请使用 [Jev shadow 开关](docs/DESKTOP_LAUNCHER.md)，下面的磁盘配置步骤用于独立 serve 服务。
+## License and provenance
 
-默认 `judge.kind=baseline` **不是复杂度判断器**，只是接线验收用的固定基准。要接入 Jev：停止服务，在 `.cae/config.json` 将 `judge.kind` 改为 `typesafe`，通过你自己的密钥管理方式设置 `TYPESAFE_API_KEY`，然后显式执行：
-
-```bash
-node bin/cae.mjs serve --enable-upstream --enable-jev
-```
-
-此时仍从 `shadow` 开始。只有明确切换到 `auto` 才改档：
-
-```bash
-node bin/cae.mjs status
-node bin/cae.mjs control auto
-node bin/cae.mjs lock high
-node bin/cae.mjs unlock
-node bin/cae.mjs control off
-node bin/cae.mjs report
-```
-
-以上 `high` 必须在你的模型支持集合内。控制是**此 CAE 服务实例级**的，影响其下一次尚未发送的合格请求，不修改正在生成的响应。
-
-Jev 调用把有限任务文本发给 TypeSafe，不是本地离线推理；脱敏是尽力处理，不保证消除业务机密。不得把公司代码或敏感任务送入未批准的第三方服务。默认最多 100 次评估/服务进程，重启重置；这是调用次数上限，不是美元预算。取消或超时仍可能已产生服务端费用。
-
-## 退出与恢复
-
-`control off` 只关闭自动判断，**仍经过代理**。完全恢复：结束这次实验 Codex 进程，停止 CAE 服务，再正常运行原版 `codex` / 官方桌面应用。因为没有写日常配置，不需要回写登录信息。代理进程崩溃不等于自动直连；不承诺不中断地恢复。
-
-## 发布到你自己的 GitHub
-
-本源码包没有预先绑定或假定已创建的远程仓库。公开发布需要你本机正常登录的 GitHub CLI，脚本不会读取或显示访问令牌。
-
-```bash
-# 只检查候选公开文件，不访问 GitHub、不改 Git。
-node scripts/publish-github.mjs --owner YOUR_LOGIN --dry-run
-
-# 明确创建 PUBLIC 仓库并提交源码：
-node scripts/publish-github.mjs --owner YOUR_LOGIN --public
-```
-
-脚本只支持**首次解压、没有 `.git` 的源码导出**，避免把含敏感旧历史的仓库公开。它核对当前 GitHub 账号、确认同名仓库不存在、重跑离线验证、扫描允许公开的文件，随后创建 `codex-adaptive-effort` 并推送。不会覆盖仓库、强推或删除任何远程资源；失败恢复见 [PUBLISHING.md](docs/PUBLISHING.md)。GitHub Actions 配置已提供，是否执行成功须看真实运行结果。
-
-## 协议来源与开源边界
-
-这是独立实现，没有打包两个上游项目源码或 Codex 二进制；设计来源和固定参考提交见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本项目代码为 MIT。模型、Jev API、Codex 和账户服务分别受其自身许可与使用条款约束；CAE 不是 OpenAI / TypeSafe 官方产品。
+[MIT](LICENSE) for this project's original code. Design inspiration and fixed source references are recorded in [Third-party notices](THIRD_PARTY_NOTICES.md). No Codex, Astra-Ares or Jev Codex Router source or binaries are bundled. External services retain their own terms; no model-quality or billing guarantees are made.

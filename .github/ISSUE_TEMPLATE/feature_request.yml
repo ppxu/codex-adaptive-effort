@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a focused improvement within the project's scope.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem does this solve? Use a non-sensitive example.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful change and how it could be validated.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and constraints
+      description: Consider fixed model/auth/service tier, privacy, compatibility and failure behavior.

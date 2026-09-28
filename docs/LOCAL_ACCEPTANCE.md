@@ -1,58 +1,31 @@
-# 本机 Codex 兼容性验收 / 2026-09-28
+# Local acceptance
 
-后续桌面启动器：已实现一条命令启动、status/stop、实际 provider 与能力预检，以及定向进程清理。172 项本机离线测试通过；本机四次启动/停止检查未发起生成。具体命令、版本限制和该轮源码证据见 [DESKTOP_LAUNCHER.md](DESKTOP_LAUNCHER.md)。
+**As of 2026-09-28:** the documented installation passed the basic CLI and isolated desktop transport path, including real Jev-driven upshift, downshift and timeout fallback. This supports bounded trials on that installation, not general production compatibility.
 
-后续发布核对：本报告对应的修复已提交为 `3c13aac2dcad333fae689b1273d3d4657bf90b8d` 并推送 main；[该提交 CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36371612189) 六项全部成功。下文旧基线/未提交措辞保留采集时状态。随后进行的独立桌面实例启动检查见 [DESKTOP_ACCEPTANCE.md](DESKTOP_ACCEPTANCE.md)，尚不代表桌面真实传输验收通过。
+This English summary consolidates the [original Chinese chronology](LOCAL_ACCEPTANCE.zh-CN.md), preserved with its source hashes and intermediate failures. Documentation translation did not rerun model calls or turn historical results into new evidence. All times below are UTC+08:00 unless specified otherwise.
 
-桌面人工测试后续：首次回复成功但绕过 CAE，已修复 app-server 子命令 -c 覆盖前置 CAE 参数的问题。新增两项回归，155 项本机测试通过；原生 config/read 确认修复后 provider=cae。随后新会话 off、纯文本 low/high、桌面取消与同会话恢复全部通过，实验进程已清理。采集时该补丁未提交，不能以旧 CI 代替补丁 CI；源码哈希、真实发送与收尾证据见 [DESKTOP_ACCEPTANCE.md](DESKTOP_ACCEPTANCE.md)。
+## Tested environment
 
-结论：用户确认授权后，已通过本机 ChatGPT 路线的真实 CLI HTTP/SSE、off、只读工具与多轮、纯文本 low/high 手动锁档、取消及同会话恢复验收。**含结构化工具结果的历史仍会旁路，不能宣称所有 Codex 任务都能改档。** 未启用 Jev、API 付费路线或桌面集成。下文保留零生成预检和随后真实验收两阶段的证据。
+| Item | Observed value |
+| --- | --- |
+| OS / CPU | macOS 27.0 / arm64 |
+| Node | v24.16.0 |
+| Desktop | ChatGPT/Codex 26.924.22138, build 11645 |
+| Native CLI | `codex-cli 0.158.0-alpha.2.1` |
+| CLI path | `/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex` |
+| Auth route | Native ChatGPT login; no API billing fallback |
+| Fixed executor | `gpt-6-astra`, incoming medium |
+| Latest runtime source tested | `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674` |
+| Runtime baseline CI | [36389005837](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36389005837), success for that SHA |
 
-## 源码与环境
+## Offline and capability checks
 
-- 执行时间：2026-09-28 10:26–10:29，Asia/Shanghai（02:26–02:29 UTC）。
-- 用户确认后的真实传输：2026-09-28 10:34–10:43，Asia/Shanghai；最终会话于 02:43:27.513 UTC 完成。
-- 分支：`main`；被测基线提交：`9cc712713393959868abe03f714ce1aca68a3e6d`。
-- origin：<https://github.com/ppxu/codex-adaptive-effort.git>；`git ls-remote` 确认远端 main 与本地 HEAD 相同。
-- 初始工作区只有未跟踪的 `SOURCE_MANIFEST.json`，原样保留。本轮验收针对该提交加本报告同版本的源码补丁；采集验收结果时补丁尚未提交。用户随后授权提交现有仓库，发布状态以对应提交和 CI 为准；没有建仓、reset、clean 或强推。
-- macOS 27.0，build 26A428；Darwin 27.0.0；CPU 架构 arm64；Node v24.16.0。
-- PATH 实际选中的 CLI：`/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`。
-- CLI 版本：`codex-cli 0.158.0-alpha.2.1`。直接使用已安装 CLI，未升级或替换应用内二进制。
-- [当前基线 CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36368962404)：head SHA 与上述提交完全一致；2026-09-28 02:13 UTC 完成，Ubuntu/macOS/Windows × Node 22/24 六项全部 success。**此 CI 不覆盖本轮未推送补丁**。
+At 14:54, `npm run verify` exited 0: **199 tests passed**, no failures/cancellations/skips, 32 module syntax checks, JSON parsing and the offline demo passed. Dependency files were unchanged from the 14:41 successful `npm ci --ignore-scripts`. The real doctor/probe at 14:54:42 exited 0 and queried metadata only. The focused model remained medium by default, supporting low/medium/high/xhigh/max/ultra.
 
-用于区分修复后源码的 SHA-256：
+The earlier repaired native capture listed these models; it is a dated observation, not a built-in capability guarantee:
 
-| 文件 | SHA-256 |
-|---|---|
-| `src/config.mjs` | `2bfbef737c7f6cc8ba303b8e9a7f5ac18b6ac21ab0195e178ec13439fc8a6748` |
-| `src/judge.mjs` | `4d5d9931212ce2a02e75c24b6e8a0aecd501fe7534cf841ea0a264d8043b275d` |
-| `src/proxy.mjs` | `1e860625b6eb4668ab6d617f19d8b35c8d41504a6944cee3b376c71bec34b004` |
-
-`VALIDATION.md` 的 2026-09-24 容器记录仍是历史证据；其中“未建仓、CI 未运行、无本机 Codex”不代表本次状态。
-
-## 第一阶段：零生成预检结果
-
-| 检查 | 结果 |
-|---|---|
-| `npm ci --ignore-scripts` | 退出 0；无安装脚本；audited 1 package，0 vulnerabilities |
-| 基线 `npm run verify` | 退出 0；24 个模块语法检查、JSON 解析；145 测试通过，0 失败/取消/跳过；五阶段模拟 HTTP/SSE 演示通过 |
-| `node bin/cae.mjs doctor` | 退出 0；codexFound=true；版本如上；CAE 未读取原生凭证；无生成调用 |
-| 基线 `node bin/cae.mjs probe` | 退出 0；02:26:45.512 UTC；只保留 3 个模型、跳过 4 个，存在能力解析缺陷，不能算完整能力验收 |
-| 原生元数据定向核对 | 02:27:06.835 UTC；只发送 initialize / initialized / model/list；7 个模型中 4 个包含 ultra，定位过滤原因 |
-| 新增回归在修复前 | 84 项中 81 通过、3 失败，复现探针过滤、配置拒绝、判断选项序列化丢失 |
-| 修复后 `npm run verify` | 退出 0；149 测试通过，0 失败/取消/跳过；语法/JSON 和五阶段离线演示通过 |
-| 修复后真实 `probe` | 退出 0；02:28:12.509 UTC；7 个模型，skippedUnsupportedEntries=0，paidGenerations=0 |
-| 隔离初始化及 launch-args | 退出 0；使用真实捕获中的 gpt-6-astra、默认 medium；临时目录仅含无敏感文本及独立 .cae；off + baseline |
-| 原生参数解析及元数据预检 | 02:28:38.151 UTC；将 codexArgs 生成的 chatgpt 参数传给原生 app-server，再执行 model/list：7 个模型、0 跳过、0 生成；不等于实际请求采用代理或认证成功 |
-
-第一阶段未启动外部上游服务，未发起真实生成。后续真实调用见第二阶段。两个阶段均未安装其他路由器、修改日常配置、审批、沙箱或服务档设置。只读帮助确认本机支持 `--no-daemon` 与 `-C`。
-
-## 真实模型能力
-
-以下来自修复后本机 `model/list`，不是示例、模拟夹具或所有模型通用承诺。baseline 是该模型元数据的默认 effort，不表示用户当前选中的模型/档位，也不证明生成服务授权。
-
-| 实际 model ID | 默认 effort | 支持的 effort |
-|---|---|---|
+| Model | Default | Supported efforts |
+| --- | --- | --- |
 | gpt-6-astra | medium | low, medium, high, xhigh, max, ultra |
 | gpt-6-sol | medium | low, medium, high, xhigh, max, ultra |
 | gpt-6-luna | medium | low, medium, high, xhigh, max |
@@ -61,236 +34,43 @@
 | gpt-5.6-luna | medium | low, medium, high, xhigh, max |
 | gpt-5.5 | medium | low, medium, high, xhigh |
 
-## 最小修复与回归
+Always refresh the native probe for a new environment or client upgrade. Never substitute `synthetic-model` in live traffic.
 
-根因：`normalizeModel` 使用 `EFFORT_NAMES` 验证每个档位，其中缺少本机已公布的 `ultra`，因此整条模型记录被过滤。配置校验也会拒绝该值。
+## Real acceptance matrix
 
-- `src/config.mjs`：补入 ultra；数量上限使用同一枚举长度。未知名称仍拒绝，每个模型只允许自身能力集合。
-- `src/judge.mjs`：补齐 ultra 的选项说明，避免支持该档位后 JSON 序列化删除对应 criterion；没有调用 Jev 或改变路由策略。
-- 四项新增测试：合成 app-server → probe → capability init → launcher；未知档位/不支持的 baseline 拒绝及枚举上限；手动锁 ultra 仅改 effort 且拒绝不支持的模型；判断选项序列化保留 ultra。全部使用 synthetic-model 和模拟服务。
-- 原有事务所有权、取消、过期 revision、完成响应后提交 lease、旁路历史和响应字节透传测试继续通过。
+| Area | Result | Scope / evidence |
+| --- | --- | --- |
+| CLI HTTP/SSE | Passed | ChatGPT route; off, read-only tools, follow-up, plain-text low/high manual locks, cancellation/recovery |
+| Desktop startup and provider | Passed | Isolated instance, actual provider preflight, new local chats |
+| Desktop manual control | Passed | Off, low/high, cancellation and same-chat recovery; [initial desktop record](DESKTOP_ACCEPTANCE.md) |
+| Jev evaluator-only fixtures | Passed protocol checks | Eight real evaluations, no executor generation; semantic limitations remain |
+| Desktop Jev shadow | Passed second three-case group | 795/552/591 ms; all main requests retained medium and completed |
+| Real auto upshift | Passed | medium → high, Jev 1137 ms, request sent high, HTTP 200 + response.completed |
+| Real auto timeout fallback | Passed fallback, failed timely evaluation | 1511 ms timeout, medium retained, task completed |
+| Real auto downshift | Passed | medium → low, Jev 665 ms, request sent low, HTTP 200 + response.completed |
+| Other-model traffic | Passed bypass | Native auxiliary model requests remained unchanged; CAE did not select their model |
+| Stop and cleanup | Passed for tested normal exits | off, stopped, management socket removed and proxy port no longer listening |
+| Structured tool-result history | Accepted limitation | Bypasses adaptation, even with manual locks |
+| Real auto cancellation / long sessions | Not tested | Offline contracts do not establish real acceptance |
+| Other client versions / platforms / API route | Not established | CI and local ChatGPT results cannot validate these |
+| Quality, savings and stable latency | Not established | No controlled task-level comparison |
 
-第一阶段通过：本机离线契约、原生初始化/model-list、能力完整解析、隔离配置生成、启动参数的元数据级解析。
+## Auto trial provenance
 
-已修复的失败：含 ultra 的模型被过滤、配置拒绝和选项描述缺失。当前没有已知的本轮检查失败。
+The first auto trial used `d8407feb878879140b17202bb1864593864cde00` with [matching successful CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36387895997). At 14:45–14:46, the spelling task timed out at 1511 ms and safely retained medium; the fictional concurrency task received high at 1137 ms and completed with a changed outbound effort.
 
-第一阶段未测试的真实传输项目随后按下表执行；补丁 CI、桌面/WebSocket、真实 Jev、质量和费用等仍未验收。
+The timeout last observed request creation at 8.2 ms and no send-start/body-sent/response event before termination. This narrows investigation toward the pre-send phase but does not identify DNS, TCP, TLS, queueing or server responsibility. Missing send instrumentation is not proof of zero remote processing or billing. Earlier uninstrumented timeouts cannot be retroactively assigned this cause.
 
-## 第二阶段：用户确认后的真实传输结果
+The downshift trial used `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674`. At 14:58:35–14:58:43, Jev returned low in 665 ms (lease 1, diagnostic confidence 0.96). The linked decision/prepared/sent events showed medium → low; the main request completed with HTTP 200. A separate client `gpt-6-luna` request bypassed and completed. One Jev call and two upstream requests were observed; no retries were added.
 
-用户以“确认，继续推进”授权既定 ChatGPT 路线、gpt-6-astra、medium 基线、low/high 手动档及真实模型用量。原生 Codex 自行处理既有认证；未读取原生登录文件、Cookie 或 Token，未设置 OPENAI_API_KEY，未改用 API。原生会话报告 modelProvider=cae、reasoningEffort=medium、serviceTier=default。审批和沙箱继承现有配置，启动参数及 RPC 均未覆盖它们。
+The downshift had a 2000 ms deadline but completed below the original 1500 ms limit. **Its success does not establish that 2000 ms improves reliability.** Context and connection conditions differed between batches. The default stays 1500 ms; 2000 ms remains explicit and process-only.
 
-| 项目 | 实测结果 |
-|---|---|
-| 首次 off | 原生 exec 退出 0，返回 CAE_OFF_OK，HTTP 200；CAE 起初错误记录未完成/未知用量，见下述修复 |
-| 修复后 off | 同一原生 app-server 的独立临时会话返回 CAE_OFF_OK；3 个文本 delta；medium 原样发送；HTTP 200 + response.completed |
-| 只读工具与多轮 | 同会话读取 hello.txt 并复述无敏感夹具；观察到 commandExecution 和工具后续接；两次上游请求均 completed=true、medium 不变 |
-| 工具历史后的 low | **未通过锁档验收，但安全旁路符合设计**：reason=media_or_structured_tool_evidence，changed=false，实际仍发送 medium；未删除或改写历史，停止该路径的改档测试 |
-| 另一独立纯文本会话的 low | medium → low，source=manual，changed=true；原生回复 CAE_LOW_OK；HTTP 200 + response.completed |
-| 同一纯文本会话的 high | medium → high，source=manual，changed=true；原生回复 CAE_HIGH_OK；HTTP 200 + response.completed |
-| 真实取消 | 恢复 off 后，在 request_sent 之后发送 turn/interrupt；原生 status=interrupted；CAE terminal=cancelled、completed=false；没有误建 lease |
-| 同会话取消后恢复 | 下一轮回复 CAE_RECOVER_OK；HTTP 200 + response.completed；medium 不变 |
-| 固定模型与请求完整性 | 本地临时诊断只保存允许的元数据和比较结果；最终两个会话的请求模型均为 gpt-6-astra，只有 low/high 两次发生 effort 改动；诊断确认 reasoning 以外字段保持一致，完整“仅 effort 可变”约束由离线对象/字节回归验证 |
-| 服务档 | 原生报告 default；实际请求体未包含 service_tier，CAE 保持其缺省状态；未声称服务端最终分配了特定优先级 |
-| Jev | judgeCalls=0，外部判断调用 0；只有手动改档 |
-| 收尾 | off、unlocked、activeRequests=0、retainedSessions=0；终止实验 CLI/app-server 和代理；4318 无监听，未发现实验目录对应的残留命令；原版 CLI --version 正常 |
+Downshift cumulative timings: created 5.0 ms, send start 348.6 ms, body sent 352.2 ms, headers 653.5 ms, body complete 663.8 ms, validated 664.2 ms. These are observation milestones, not pure server inference measurements. Known Jev input usage was 1694 tokens; evaluator output usage and actual response model version were not captured and remain unknown.
 
-本次共观察到 **12 次真实上游请求发送**，含定位问题时的复测和一次主动取消；不是零用量检查。初期三次成功生成分别被旧观察逻辑误记为未完成或取消，原始记录原样保留，不回填成成功。最终两个隔离会话的完成、旁路与取消均能正确区分。没有读取账户额度扣减或估算美元成本，也不将未知用量记成零。
+At 14:59:03 the instance was set off with 1/8 evaluator calls, no active requests, no lock and no open circuit. Stop succeeded; the management socket was gone and port 4319 no longer listened. Disk configuration remained shadow / baseline / 1500 ms. Normal login, global configuration, approvals and sandbox were not changed.
 
-### 真实传输发现的两项最小修复
+## Reproduce and interpret
 
-1. **缺失 Content-Type 的 SSE**：真实响应没有 Content-Type / Content-Encoding，但有完整 data 帧和 response.completed。此前观察器按非流式 JSON 处理而漏报完成与 usage。现在仅当响应缺少 Content-Type、且请求明确 stream=true 时按 SSE 观察；显式 JSON 类型仍优先，转发头和响应字节不变。
-2. **完成事件后的正常关闭**：原生 CLI 可以在收到 response.completed 后、HTTP EOF 前关闭连接。此前 relay 把已收到的有效完成事件覆盖为 cancelled。现在只在 2xx 且观察器已校验有效完成事件时保留完成结果；完成事件之前的取消仍失败，不提交 lease。
+Follow [local validation](LOCAL_VALIDATION.md) or [desktop startup and recovery](DESKTOP_LAUNCHER.md). Use actual capabilities, explicitly authorize real calls and submit only non-sensitive fixtures. Stop after the planned sample count; do not retry until a preferred recommendation appears.
 
-两项均先补回归复现失败，再修代码。新增四项模拟 HTTP 测试覆盖：缺失类型头的字节透传/完成/lease；缺失终止事件及非 stream 请求不误判；显式 JSON 优先；完成事件后关闭仍完成。原有中途取消、错误、事务和 stale revision 测试继续通过。最终 `npm run verify`：**153/153 通过，0 失败、0 取消、0 跳过**；24 模块语法检查、JSON 解析及五阶段离线演示通过。
-
-CLI 另报告既有配置中 supports_websockets 不识别及 respect_system_proxy 属实验功能；未修改日常配置来消除警告。实际已观察到本次 HTTP/SSE 成功，不把它扩大为所有客户端版本或 WebSocket 禁用机制的保证。
-
-### 本轮实际调用方式
-
-首次单轮使用下面的原生 exec 入口；所有 CAE 路径变量均指向独立实验目录：
-
-```bash
-node "$CAE_ROOT/bin/cae.mjs" codex --config "$CAE_TRIAL/.cae/config.json" \
-  --auth chatgpt --codex "$CAE_CODEX_BIN" -- --no-daemon exec --ephemeral --json \
-  -C "$CAE_TRIAL" '只回复 CAE_OFF_OK，不使用工具，不访问其他文件或服务。'
-```
-
-多轮与取消使用同一 CAE launcher 启动独立 `app-server`（stdio，不是共享 daemon），没有开发新的桌面或 WebSocket 接口：
-
-```bash
-node "$CAE_ROOT/bin/cae.mjs" codex --config "$CAE_TRIAL/.cae/config.json" \
-  --auth chatgpt --codex "$CAE_CODEX_BIN" -- app-server
-```
-
-先从当前原生 CLI 的 generate-json-schema 核对协议，再发送 initialize / initialized、thread/start（cwd=实验目录、ephemeral=true），随后通过 turn/start 在同一 thread 中发送纯文本任务。只在请求之间执行下节的 CAE lock/control。取消使用该 threadId / turnId 的 turn/interrupt；不覆盖 model、serviceTier、approvalPolicy 或 sandboxPolicy。观察 turn/completed、文本 delta、工具项与 CAE request_prepared/request_sent/upstream_outcome，所有原生 ID 和原始输出仅留本机。
-
-### 剩余边界
-
-纯文本手动锁档路径已验收；工具执行后的结构化结果仍旁路，用户已接受这个当前边界。本轮不扩大解析范围，不将新建纯文本会话的通过结果算到原工具会话上。真实 Jev、auto 判断、长会话压缩、桌面/WebSocket、API 路线、其他模型、质量和成本仍未验收。采集本报告时 CI 只对应旧基线；153 项结果是本机证据，发布补丁后需按其实际 SHA 核对 CI。服务端真实推理预算不能由 200、sent 或 response.completed 单独证明。
-
-## 复现命令：纯文本 off → 手动锁档
-
-本会话已经获得上述范围的真实调用授权。以下保留手工复现步骤；换账户、模型或付费路线需另行明确，不需要提供凭证值。工具任务另用 off 会话验证，不将含结构化工具结果的历史改造成 eligible。
-
-终端 A，从仓库根目录准备全新实验目录。这段准备不生成；CLI 升级后必须刷新探针。所有变量只供该实验使用：
-
-```bash
-export CAE_ROOT="$PWD"
-export CAE_CODEX_BIN="$(command -v codex)"
-node "$CAE_ROOT/bin/cae.mjs" probe --codex "$CAE_CODEX_BIN" > "$CAE_ROOT/capabilities.local.json"
-# 上一步必须退出 0，且实际捕获仍包含选定模型和 low/medium/high。
-export CAE_TRIAL="$(mktemp -d "${TMPDIR:-/tmp}/cae-transport.XXXXXX")"
-node "$CAE_ROOT/bin/cae.mjs" init --dir "$CAE_TRIAL/.cae" \
-  --model gpt-6-astra --auth chatgpt --capabilities "$CAE_ROOT/capabilities.local.json"
-node --input-type=module <<'JS'
-import { readFileSync, writeFileSync } from 'node:fs';
-const directory = process.env.CAE_TRIAL;
-const path = directory + '/.cae/config.json';
-const c = JSON.parse(readFileSync(path, 'utf8'));
-if (!['low', 'medium', 'high'].every(e => c.supportedEfforts.includes(e))) throw Error('Refresh and review capabilities');
-c.mode = 'off';
-writeFileSync(path, JSON.stringify(c, null, 2) + '\n');
-writeFileSync(directory + '/hello.txt', 'CAE acceptance fixture. No private content.\n');
-writeFileSync(process.env.CAE_ROOT + '/transport-plan.local.json', JSON.stringify({directory}) + '\n');
-JS
-node "$CAE_ROOT/bin/cae.mjs" launch-args --config "$CAE_TRIAL/.cae/config.json" \
-  --auth chatgpt --codex "$CAE_CODEX_BIN" -- --no-daemon -C "$CAE_TRIAL"
-```
-
-任一步非零立即停止。预期：固定真实模型、medium 基线、本地 Responses、禁用上游 WebSocket/重试、只有环境变量名而无令牌值；不覆盖审批、沙箱或 service tier。初始化拒绝覆盖已有目录。
-
-终端 A 启动前台服务：
-
-```bash
-node "$CAE_ROOT/bin/cae.mjs" serve --config "$CAE_TRIAL/.cae/config.json" --enable-upstream
-```
-
-预期只监听 127.0.0.1:4318，mode=off，judge=baseline，upstream=chatgpt。端口占用即停止；不要终止其他进程。需要时只修改实验 .cae 的 port，重新检查参数。
-
-终端 B，也从仓库根目录运行；这些命令只读取实验目录指针，不读密钥：
-
-```bash
-export CAE_ROOT="$PWD"
-export CAE_TRIAL="$(node -p 'JSON.parse(require("node:fs").readFileSync("transport-plan.local.json", "utf8")).directory')"
-export CAE_CODEX_BIN="$(command -v codex)"
-test -d "$CAE_TRIAL" || exit 1
-node "$CAE_ROOT/bin/cae.mjs" status --config "$CAE_TRIAL/.cae/config.json"
-node "$CAE_ROOT/bin/cae.mjs" codex --config "$CAE_TRIAL/.cae/config.json" \
-  --auth chatgpt --codex "$CAE_CODEX_BIN" -- --no-daemon -C "$CAE_TRIAL"
-```
-
-仅在 health 正常、off 且模型正确时启动 CLI。保留日常审批/沙箱，按正常流程确认临时目录信任。先发“只回复 CAE_OFF_OK，不使用工具”，然后在这条纯文本会话按下节验证 low/high。只读 hello.txt 放在另一条 off 会话验证。使用界面取消操作中止一个无敏感文本请求，再检查后续请求能正常完成。若出现 401/403/415/426 或协议错误，记录脱敏错误码与版本并停止；不导出凭证、不换渠道、不通过删历史绕过。
-
-off 通过后，终端 C 从仓库根目录设置与 B 相同的 CAE_ROOT/CAE_TRIAL，然后在两次用户请求之间执行：
-
-```bash
-node "$CAE_ROOT/bin/cae.mjs" lock low --config "$CAE_TRIAL/.cae/config.json"
-node "$CAE_ROOT/bin/cae.mjs" control auto --config "$CAE_TRIAL/.cae/config.json"
-# B 发：“只回复 CAE_LOW_OK，不使用工具”。等待完成再继续。
-node "$CAE_ROOT/bin/cae.mjs" lock high --config "$CAE_TRIAL/.cae/config.json"
-# B 发：“只回复 CAE_HIGH_OK，不使用工具”。等待完成再继续。
-node "$CAE_ROOT/bin/cae.mjs" status --config "$CAE_TRIAL/.cae/config.json"
-node "$CAE_ROOT/bin/cae.mjs" report --config "$CAE_TRIAL/.cae/config.json"
-node "$CAE_ROOT/bin/cae.mjs" control off --config "$CAE_TRIAL/.cae/config.json"
-node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
-```
-
-预期：off 的 request_prepared/request_sent 为 changed=false；合格的 auto 请求出现 source=manual、low/high 的 prepared/sent 与 completed outcome，judgeCalls=0，externalAttempts=0。按 requestId 关联实验 `.cae/events.jsonl` 的脱敏元数据，不记录请求正文或认证头；未知 usage 保持 unknown。若走旁路，保留 reason，不能称作锁档通过，不能删除历史强行通过。200、sent 和日志中的 effort 只能证明传输阶段观察，不能证明真实推理预算。
-
-退出恢复：结束终端 B 的实验 CLI，终端 A Ctrl+C 停止代理，再按原方式启动日常 Codex。`control off` 仍经过代理，不等于直连；代理崩溃也不会自动恢复直连。临时目录及日志留本机供核对，不上传；临时目录失效时重新初始化，不复制登录文件或覆盖日常 config.toml。
-
-## 交付边界
-
-### 真实自动降档通过（2026-09-28 14:58:35–14:58:43 +08:00）
-
-被测源码 `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674`，[对应 CI 36389005837](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36389005837) 成功。沿用下节 14:54 的 199 项离线测试、真实能力探针及相同本机环境。本轮只更新文档，没有修改运行代码、默认配置或追加模型调用。
-
-用户完成计划中的单条无工具拼写样例。按本次窗口的 requestId 在本地关联 CAE 元数据：主模型 `gpt-6-astra`、mode=auto、无锁档、来请求 medium；Jev 在 **665 ms** 返回 low（source=judge、lease=1、confidence=0.96），decision 为 changed=true，request_prepared 和 request_sent 均为 **low**。随后 HTTP 200、response.completed。此次真实 medium → low 自动降档通过；结合前一批的 medium → high 与超时回退，限定桌面版本上的基本自动改档传输链路已经覆盖。
-
-实际判断超时上限为 2000 ms，但本次返回只需 665 ms，也低于原先 1500 ms。不能把成功归因于放宽超时，不能推导稳定性改善、任务质量或费用收益；此前超时原因仍未知。不同批次的上下文和连接条件未控制，不是严格 A/B 对照。默认继续保留 1500 ms，2000 ms 仅保留为显式实验选项。
-
-累计阶段值：created 5.0 ms、sendStart 348.6 ms、bodySent 352.2 ms、headers 653.5 ms、body 663.8 ms、validated 664.2 ms；发完到响应头为 301.3 ms，不能视为纯服务端推理时间。已知 Jev 输入为 1694 token，输出用量和响应模型版本未采集，保持未知。
-
-另外一条客户端 `gpt-6-luna` / low 请求按 different_model 原样旁路并完成，无 Jev 调用；未读取正文，不断言用途。合计 1 次 Jev 判断、2 次上游成功完成、1 次改档，无超时或重试。
-
-14:59:03 切回 off，确认 judgeCalls=1/8、activeRequests=0、lockedEffort=null、未熔断；随后 desktop stop 返回 stopped，管理 socket 已移除，4319 不再监听。磁盘仍为 shadow / baseline / 1500 ms；日常配置、登录、审批和沙箱没有修改。
-
-**已通过：** 本次真实自动降档、2000 ms 参数实际生效、本实例 off/退出清理，以及此前真实升档和超时回退。**仍未确定：** 放宽至 2000 ms 是否减少超时、发送前超时根因、日常稳定性、质量和成本收益。**未测试：** auto 下的真实取消/短跟进/长会话、其他平台或版本。无需再追加成功样例；当前可在已验证环境、无敏感任务上有界试用，不能扩展为生产兼容承诺。复现及恢复命令见 [启动器说明](DESKTOP_LAUNCHER.md#可选-2000-ms-实验)。
-
-### 2000 ms 进程级实验准备（2026-09-28 14:54–14:56 +08:00）
-
-用户同意继续验证 2000 ms 与真实自动降档。被测源码为 `b60d71f37270bc739fc833dffb37414a80530ad9` 加本节同提交的源码补丁；该基线 CI 已成功，新提交 CI 单独核验。新增 `desktop start --enable-jev --jev-timeout-ms 1500|2000`，仅覆盖当前进程超时、不写配置；未指定参数时继续取磁盘值与 1500 ms 的较小值。保留最多 8 次判断、更小调用预算、不重试和错误回退，状态接口新增实际生效的 judgeTimeoutMs。未改变网络实现或超时阶段观测。
-
-本机仍为 macOS 27.0 arm64 / Node v24.16.0 / 桌面 26.924.22138 / 内置 CLI 0.158.0-alpha.2.1，CLI 路径沿用下节记录。`npm run verify` 退出 0：199 测试全部通过，0 失败/取消/跳过，32 模块语法、JSON 和离线演示通过；依赖文件未变，沿用 14:41 的 `npm ci --ignore-scripts` 结果。新增回归检查非法参数/错误命令/缺少 Jev 授权拒绝、进程配置不落盘、调用上限保留，以及同样延迟 1700 ms 的合成判断在 2000 ms 下返回 low、在默认及显式 1500 ms 下超时保持 medium。该测试仅证明时限接线，不能证明真实服务性能。
-
-14:54:42 的真实 doctor/probe 均退出 0；`gpt-6-astra` 默认 medium，实际支持 low/medium/high/xhigh/max/ultra。随后真实实例签名、版本、provider 检查通过，running、bridgeChecks=2、effectiveProvider=cae；切到 auto 后 judgeTimeoutMs=2000、judgeCalls=0/8、lockedEffort=null、activeRequests=0。磁盘配置仍为 shadow / baseline / 1500 ms，没有新增真实 Jev 判断或模型生成。
-
-被测运行文件 SHA-256：
-
-| 文件 | SHA-256 |
-|---|---|
-| src/desktop.mjs | 408ab4009cff7cf0b1f62a338613080f0087e4da25c42e2f495ad9771414ea14 |
-| src/controller.mjs | b86a4b0099b6ea8a04a471c19a7f216955ab59b55261509868bfa0ebefc6c828 |
-| bin/cae.mjs | 6a00b448a1d9f3958481ef97d2e1408edf42ddbc6eb3495d712e3b76b002cbdf |
-
-**已通过：** 新参数离线验证、实际能力查询、真实实例 2000 ms 生效和 auto 切换。**待验收：** 一条与上轮相同的拼写任务是否获得 low 并实际发送完成、真实超时是否缓解，以及本次停止恢复；当前没有证据宣称 2000 ms 优于 1500 ms。
-
-下一步只发送一条无工具拼写样例，保留同一主模型和客户端 medium，使用独立无敏感目录的新本地会话。按 [2000 ms 步骤](DESKTOP_LAUNCHER.md#可选-2000-ms-实验) 关联 decision → sent → completed；超时或未降档如实记录，不自动追加。完成后 `node bin/cae.mjs control off --config .cae/desktop/config.json`，再 `node bin/cae.mjs desktop stop`。去掉参数重启即恢复默认时限，无需修改日常配置。原始日志与能力捕获均被忽略，不提交。
-
-### 桌面 Jev auto 首轮真实验收（2026-09-28 14:45–14:46 +08:00）
-
-被测源码 `d8407feb878879140b17202bb1864593864cde00`；[对应 CI 36387895997](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36387895997) 已核验成功。沿用同一源码在 14:41–14:42 完成的 197 项本机测试、doctor 和 model/list 结果，下节保留环境和源文件校验值。本轮仅更新脱敏记录，不修改运行代码，不新增重试或模型调用。
-
-用户按计划在独立实验窗口完成两条无工具合成任务；CAE 以本次时间窗口和 requestId 在本地关联建议、准备、发送与完成事件，不读取原生任务正文。固定主模型 `gpt-6-astra`，两条来请求均为 medium，无手动锁档。
-
-| 顺序 / 场景 | Jev 结果与耗时 | 实际发送 | 上游结果 |
-|---|---|---|---|
-| 1 / 拼写修改 | 1511 ms，judge_timeout，source=fallback，无有效建议 | medium → medium，changed=false | HTTP 200，response.completed |
-| 2 / 虚构并发分析 | 1137 ms，source=judge，建议 high，lease=1，confidence=0.41 | medium → high，changed=true；prepared/sent 均为 high | HTTP 200，response.completed |
-
-第二条已建立真实 Jev 建议到实际传输改档再到成功完成的证据链；不把桌面选择器显示的 medium 当作代理实际发送值，也不把传输档位或 reasoning token 计数视为实际算力分配、质量或成本收益证明。第一条的 proposedEffort=medium 是回退值，不是 Jev 建议。额外一条客户端 `gpt-6-luna` / low 请求因 different_model 原样旁路并完成，无 Jev 调用；未读取正文，不断言用途，也不是 CAE 切换主模型。
-
-本进程合计 2 次 Jev 尝试、1 次成功判断、1 次超时；3 次上游发送均成功完成，其中仅 1 次改档。已知 Jev 输入用量为 908 token，超时调用用量未知；Jev 响应模型版本和输出用量未采集，均未知。超时仍可能计费，未增加调用预算。
-
-这次超时的最后观测阶段为 `created`：请求创建在 8.2 ms，最后观测在 1510.2 ms，sendStart/bodySent/headers/body/validated 全为空。它说明超时前没有记录到发送开始，调查应优先关注发送前的排队/建连阶段；当前观测不能拆分 DNS、TCP、TLS 或确定实际网络根因，不能归因为 Jev 服务端推理，也不能证明请求未到服务端或没有计费。旧批次两次超时仍无阶段数据，不能追溯套用本次结论。
-
-成功样例的累计阶段值为：created 0.7 ms、sendStart 407.9 ms、bodySent 415.0 ms、headers 1105.7 ms、body 1135.9 ms、validated 1136.2 ms。请求发完到响应头为 690.7 ms，包含网络和服务端处理，不等同于纯推理时间。保持原生 fetch、1500 ms 上限与失败回退，不因两条样例调整网络实现。
-
-验收后 14:46:18 切回 off，确认 judgeCalls=2/8、activeRequests=0、无锁档、未熔断；随后 `desktop stop` 返回 stopped，并核对本实例管理 socket 已移除、4319 端口不再监听。日常配置和登录未修改，无需回写；日常桌面恢复后的新增生成未测试。
-
-**已通过：** 真实自动升档、超时保留原档、两条主任务完成、其他模型旁路，以及本实例 off/停止清理。**未通过：** 两条均及时获得 Jev 判断，因第一条超时。**未测试完成：** 真实 Jev 自动降档、auto 下短跟进/取消/长会话及质量与费用效果。无需为补齐成功率立即重发；下一优先级是排查已观测的发送前超时，再决定是否进行新的有界降档验收。详细复现和退出命令保留在 [桌面启动器](DESKTOP_LAUNCHER.md#jev-auto受控实验)。
-
-### 受控桌面 Jev auto 入口（2026-09-28 14:41–14:42 +08:00）
-
-用户在 shadow 验收后明确同意推进自动改档。以源码基线 `6867006fd349c0103df07ce28c605a1b32f5c2cc` 加本节同提交的补丁验证；此前基线 [CI 36386991432](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36386991432) 成功，新提交 CI 必须另查，不能沿用。只增加桌面启动的 `--allow-jev-auto` 权限入口，复用已有控制器，不修改判断器、超时或模型传输实现。
-
-- 本机 macOS 27.0 arm64、Node v24.16.0，官方桌面 26.924.22138 / build 11645。实际 CLI 为 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`，版本 `codex-cli 0.158.0-alpha.2.1`。
-- `npm ci --ignore-scripts`、`npm run verify` 退出码均为 0；197 测试通过，0 失败/取消/跳过，32 模块语法、JSON 和五阶段离线演示通过。新增两项回归覆盖开关约束、重启恢复权限，以及模拟 Jev 经真实本机 HTTP/SSE 的 low/high 改档、只改 effort、未知档位/超时/次数耗尽回退、off 和不兼容请求字节不变、较小预算保留、密钥不进入原生子进程和日志。
-- 开发中首次新增测试在同端口重启后复用已关闭客户端连接，出现 ECONNRESET；测试请求使用 `Connection: close` 后通过。该调整仅限测试夹具，没有修改实际模型或 Jev 连接池，也没有跳过失败项。
-- 14:41:57 的真实 doctor/probe 均退出 0；model/list 中 `gpt-6-astra` 默认 medium，支持 low/medium/high/xhigh/max/ultra。没有执行生成，原始能力捕获仅留本机忽略文件。
-- 14:42 启动独立真实桌面实例：running、effectiveProvider=cae、bridgeChecks=2、connected=true、judgeKind=typesafe、shadowOnly=false，初始 shadow。随后 `control auto` 成功，lockedEffort=null、judgeCalls=0/8、activeRequests=0；未发起新的 Jev 或执行模型生成。已建立仅含合成说明的独立本机测试目录。
-- **已通过：** 最小入口、完整离线测试、真实能力查询、签名/版本/provider 预检、真实实例启动和 auto 控制切换。**未测试：** 本入口的真实 Jev 建议改写及后续上游完成、本实例最终停止恢复。**仍未解决：** 旧批次两次 Jev 超时根因，不据此扩大时限或宣称日常稳定性。
-
-被测运行文件 SHA-256：
-
-| 文件 | SHA-256 |
-|---|---|
-| src/desktop.mjs | d501e06bf5b857720d2c4613a55d26ff6fc1c339aa4865b47c96e4c03d643a6e |
-| bin/cae.mjs | b3225c94fa8fb715f082710d408a16aaf9fa82279cab9ca0c8325b4e8d06948c |
-
-下一步为 [两条真实 auto 验收步骤](DESKTOP_LAUNCHER.md#jev-auto受控实验)：在新实例的新本地会话保留 medium，依次发送无工具的拼写修改和虚构并发分析；按 requestId 关联 source=judge、changed、实际 sent effort 和 completed。仅建议与来请求档位不同且发送档位与建议一致时，才记为自动改档通过，页面选择器无需随之变化。完成或错误后 `node bin/cae.mjs control off --config .cae/desktop/config.json`，检查元数据，再 `node bin/cae.mjs desktop stop`。不读登录文件，不改全局配置、审批、沙箱或服务档；当前实例保留供用户手动发送样例。
-
-### 此前阶段
-
-桌面 Jev 超时的阶段观测已补齐并通过 195 项离线测试，详见 [诊断记录](JEV_SHADOW_ACCEPTANCE.md)。使用原生 fetch 诊断事件，不改变连接池、请求、超时或重试；本轮未新增真实调用，原有两次超时根因仍待采样定位。
-
-随后用户在新实例完成首条真实分段样本：Jev 795 ms 返回 low，发送前 461.2 ms、请求发完至响应头 315.6 ms；实际保持 medium 并正常完成。该样本证明计时生效，没有复现超时，不能用于确认原有两次超时的根因；复杂任务和短跟进的真实分段数据仍待采集。
-
-同实例随后补齐复杂任务与短跟进：Jev 分别 552/591 ms 返回 high，均保持 medium 并正常完成。本组 3 条 shadow 和分段采样通过，可结束重复测试；原有两次超时没有复现，原因仍未知，不据此放宽 1500 ms 超时或启用 auto。完整阶段值和证据边界见上述诊断记录。
-
-后续桌面 Jev shadow 开关已实现，见 [桌面启动器](DESKTOP_LAUNCHER.md)：进程级 opt-in、最多 8 次、强制 off/shadow、原生子进程不继承独立 Jev 密钥。188 项离线测试通过；功能开发阶段外部生成调用 0。随后用户完成桌面三条真实文本任务：均保持 medium 并完成，一条 Jev 建议 high、两条超时回退；连接与回退通过，1500 ms 预算下的判断稳定性未通过，见 [逐条记录](JEV_SHADOW_ACCEPTANCE.md)。
-
-2026-09-28 后续自动判断验证：见 [Jev shadow 验收](JEV_SHADOW_ACCEPTANCE.md)。源码 `6763d15` 的 181 项离线测试与对应 CI 通过；经用户授权使用本地独立环境变量，8 次真实 Jev 判断和 2 个旁路样例通过协议检查，实际响应模型 `jev-1.13.0`，Codex 生成调用 0。合成样例语义观察已记录，缺失上下文的置信度和接近超时门槛的延迟仍需关注。桌面自动判断和日常 auto 可靠性仍未验收；本文较早的 CLI 历史阶段不回填这些后续结果。
-
-原始 verify/回归输出和临时验收驱动保存在被忽略的 `*.local.txt`；doctor、修复前后 capability、预检和真实传输摘要保存在被忽略的 `*.local.json`；隔离 .cae、原生输出和仅记录元数据的诊断在系统临时目录。它们均不属于提交候选。报告不含用户目录、登录账号、令牌或真实任务内容。最终仅保留相关源码、合成测试和本报告的改动，已有 SOURCE_MANIFEST.json 不变。
+Correlate recommendations with actual sends and completion using local metadata, then publish only a sanitized summary. A setting sent successfully is not proof of actual reasoning allocation, task quality or savings. Raw logs, `.cae`, captures, credentials and real task text remain uncommitted. Every new commit needs its own CI check; the historical links above apply only to their stated commits.

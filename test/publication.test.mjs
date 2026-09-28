@@ -28,3 +28,13 @@ test('publication refuses symlinks in public roots', { skip: process.platform ==
 test('publication refuses auth or local captures even under source roots', t => {
   const root = fixture(t); writeFileSync(join(root, 'src/auth.json'), '{"synthetic":"data"}'); assert.throws(() => publicationFiles(root));
 });
+
+test('publication includes language entry points and community templates in source exports', t => {
+  const root = fixture(t);
+  for (const name of ['README.en.md', 'README.zh-CN.md', 'CODE_OF_CONDUCT.md']) writeFileSync(join(root, name), '# Synthetic public document');
+  mkdirSync(join(root, '.github/ISSUE_TEMPLATE'), { recursive: true });
+  writeFileSync(join(root, '.github/ISSUE_TEMPLATE/bug_report.yml'), 'name: Synthetic');
+  writeFileSync(join(root, '.github/pull_request_template.md'), '# Synthetic pull request');
+  const names = publicationFiles(root).map(f => f.path);
+  for (const name of ['README.en.md', 'README.zh-CN.md', 'CODE_OF_CONDUCT.md', '.github/ISSUE_TEMPLATE/bug_report.yml', '.github/pull_request_template.md']) assert(names.includes(name));
+});
