@@ -49,7 +49,7 @@ test('native metadata preflight catches original desktop scope bug and accepts r
   assert.deepEqual(result, { provider: 'cae', model: 'synthetic-model', effort: 'medium' });
 });
 for (const [scenario, code] of [['mismatch', 'effective_provider_mismatch'], ['secret', 'effective_provider_mismatch'],
-  ['rpc-error', 'config_rpc_error'], ['malformed', 'config_invalid_json'], ['hang', 'config_timeout']]) {
+  ['rpc-error', 'config_rpc_error'], ['malformed', 'config_invalid_json'], ['null', 'config_invalid_message'], ['hang', 'config_timeout']]) {
   test('desktop preflight fails closed: ' + scenario, async () => {
     await assert.rejects(verifyDesktopProvider(process.execPath, [fixture, scenario, ...codexArgs(config(), 'chatgpt', DESKTOP_ARGS)], config(),
       { timeoutMs: scenario === 'hang' ? 100 : 3000 }), e => e.code.endsWith(code) && !e.message.includes('synthetic-private'));
@@ -97,6 +97,19 @@ test('provider mismatch prevents desktop spawn and releases owned socket', async
   await assert.rejects(startDesktop(s.options, deps), /effective_provider_mismatch/);
   assert.equal(spawned, false); assert.equal(existsSync(join(s.dir, 'desktop-bridge')), false);
   await assert.rejects(desktopControl(s.path, 'status'));
+});
+test('non-object desktop control frames cannot crash or stop the supervisor', async t => {
+  const s = await setup(t), desktop = await startDesktop(s.options, dependencies());
+  t.after(() => desktop.stop());
+  for (const value of [null, [], 42, false, 'text']) {
+    await new Promise((resolve, reject) => {
+      const socket = createConnection(desktopSocket(s.path));
+      socket.setTimeout(1000, () => { socket.destroy(); reject(new Error('control frame did not close')); });
+      socket.on('error', reject); socket.on('close', resolve); socket.resume();
+      socket.on('connect', () => socket.write(JSON.stringify(value) + '\n'));
+    });
+    assert.equal((await desktopControl(s.path, 'status')).ok, true);
+  }
 });
 test('occupied proxy port is not hijacked or closed by failed desktop startup', async t => {
   const s = await setup(t), occupied = createServer(socket => socket.end());

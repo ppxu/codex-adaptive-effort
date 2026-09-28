@@ -8,6 +8,10 @@ The runtime source `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674` passed 199 tests o
 
 Use [local acceptance](LOCAL_ACCEPTANCE.md) for real native/model evidence and [limitations](LIMITATIONS.md) for untested boundaries. The [desktop record](DESKTOP_ACCEPTANCE.md) and [Jev record](JEV_SHADOW_ACCEPTANCE.md) separate actual transport from evaluator-only and shadow tests.
 
+## Code quality review — 2026-09-28
+
+Against baseline `1f3b4e205da4603c7aac1d066fa1c82b691cbd4d` plus the fixes accompanying this record, `npm run verify` passed **212 tests** on macOS 27.0 arm64 / Node v24.16.0, with no failures, cancellations or skips. Eight focused regressions first reproduced defects in the baseline implementation. The public-source scan, syntax/JSON checks and offline demo passed. No real model or Jev calls were made; native compatibility was not revalidated. See the [review findings and scope](CODE_REVIEW_2026-09-28.md). Check this revision's exact CI SHA separately.
+
 ## English documentation transition — 2026-09-28
 
 Against source baseline `b7e2b5086447845eea43f19632921ce917094826` plus the documentation/metadata/export-list changes in this revision, local `npm ci --ignore-scripts` and `npm run verify` exited 0: **200 tests passed**, no failures/cancellations/skips. The added regression ensures source exports include the language entry points and community templates. Runtime behavior and dependencies did not change; no real model calls were made.

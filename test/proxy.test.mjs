@@ -64,6 +64,38 @@ test('explicit JSON content type takes precedence over requested streaming', asy
   assert.equal(h.events.at(-1).completed, true);
   assert.equal(h.events.at(-1).outputTokens, 3);
 });
+test('non-object SSE frames pass through byte-for-byte without losing a later completion', async t => {
+  const bytes = Buffer.concat([Buffer.from('data: null\n\ndata: []\n\n'), completedSse()]);
+  const h = await harness(t, { handler: (_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/event-stream' }); res.end(bytes);
+  } });
+  const b = body(); assert.deepEqual(await consume(await h.request(b)), bytes);
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, true);
+  await consume(await h.request(append(b))); assert.equal(h.judge.calls, 1);
+});
+test('JSON completed status without identity cannot establish a reusable lease', async t => {
+  const bytes = JSON.stringify({ status: 'completed', usage: { output_tokens: 3 } });
+  const h = await harness(t, { handler: (_req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' }); res.end(bytes);
+  } });
+  const b = body(); assert.equal(await (await h.request(b)).text(), bytes);
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, false); assert.equal(h.proxy.controller.sessions.size, 0);
+  await consume(await h.request(append(b))); assert.equal(h.judge.calls, 2);
+});
+test('unknown history bypass retains original bytes and never calls the evaluator, including manual lock', async t => {
+  const h = await harness(t);
+  const b = append(body(), { type: 'future_evidence', data: 'synthetic' });
+  const bytes = '  ' + JSON.stringify(b, null, 2) + '\n';
+  for (const lockedEffort of [null, 'low']) {
+    h.proxy.controller.control({ mode: 'auto', lockedEffort });
+    assert.deepEqual(await consume(await h.request(bytes)), completedSse());
+    assert.equal(h.records.at(-1).bytes.toString(), bytes); assert.equal(h.judge.calls, 0);
+    await eventually(() => h.proxy.controller.active.size === 0);
+    assert.equal(h.proxy.controller.sessions.size, 0);
+  }
+});
 test('shadow preserves original JSON bytes, whitespace and Unicode', async t => {
   const h = await harness(t, { cfg: { mode: 'shadow' } }); const raw = '\n  ' + JSON.stringify(body(), null, 3) + '\n';
   await consume(await h.request(raw)); assert.equal(h.records[0].bytes.toString(), raw); assert.equal(h.judge.calls, 1);

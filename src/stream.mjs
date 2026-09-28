@@ -1,5 +1,6 @@
 import { StringDecoder } from 'node:string_decoder';
 import { usageOf } from './audit.mjs';
+import { isObject } from './util.mjs';
 
 /** Observe a bounded copy of terminal metadata; never rewrite the byte stream. */
 export class ResponseObserver {
@@ -29,6 +30,7 @@ export class ResponseObserver {
     if (!data || data === '[DONE]') return;
     let event;
     try { event = JSON.parse(data); } catch { return; }
+    if (!isObject(event)) return;
     if (event.type === 'response.created') this.createdId = event.response?.id ?? null;
     if (['response.completed', 'response.failed', 'response.incomplete'].includes(event.type)) {
       this.terminal = event.type;
@@ -46,7 +48,8 @@ export class ResponseObserver {
       try {
         const body = JSON.parse(this.buffer);
         this.terminal = typeof body.status === 'string' ? body.status : null;
-        this.completed = body.status === 'completed'; this.usage = usageOf(body);
+        this.completed = body.status === 'completed' && typeof body.id === 'string' && body.id.length > 0;
+        this.usage = usageOf(body);
       } catch { /* Unknown, not zero. */ }
     }
     this.buffer = '';

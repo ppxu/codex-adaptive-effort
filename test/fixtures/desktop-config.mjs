@@ -18,6 +18,7 @@ createInterface({ input: process.stdin }).on('line', line => {
   if (message.method === 'initialized') return;
   if (message.method === 'initialize') { console.log(JSON.stringify({ id: message.id, result: {} })); return; }
   if (message.method !== 'config/read') process.exit(7);
+  if (scenario === 'null') { console.log('null'); return; }
   if (scenario === 'rpc-error') { console.log(JSON.stringify({ id: message.id, error: { message: 'synthetic-private-native-error' } })); return; }
   if (scenario === 'malformed') { console.log('not-json'); return; }
   console.log(JSON.stringify({ id: message.id, result: { config: { model: values.model,

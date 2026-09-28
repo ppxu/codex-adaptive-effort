@@ -19,6 +19,7 @@ English is the default documentation language. Start with the [project overview]
 | [Desktop acceptance](DESKTOP_ACCEPTANCE.md) | Initial argument-scope fix and manual desktop transport validation |
 | [Jev evaluation](JEV_SHADOW_ACCEPTANCE.md) | Evaluator-only fixtures, shadow runs, timing and unresolved timeouts |
 | [Offline validation](VALIDATION.md) | Current test scope and the original dated evidence snapshot |
+| [Code quality review](CODE_REVIEW_2026-09-28.md) | Confirmed defects, minimal fixes and synthetic regression evidence |
 | [Acceptance template](acceptance-template.md) | Record a new environment without exposing private data |
 
 ## Develop and maintain

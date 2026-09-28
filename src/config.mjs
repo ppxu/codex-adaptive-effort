@@ -25,7 +25,7 @@ export function validateConfig(c) {
     try { url = new URL(c.upstream.baseUrl); } catch { throw new CaeError('config_mock_url'); }
     if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port || url.username || url.password || url.search || url.hash || !['', '/', '/v1'].includes(url.pathname))
       throw new CaeError('config_mock_url');
-  } else if (!UPSTREAMS[c.upstream.kind] || c.upstream.baseUrl !== undefined) throw new CaeError('config_upstream');
+  } else if (typeof c.upstream.kind !== 'string' || !Object.hasOwn(UPSTREAMS, c.upstream.kind) || c.upstream.baseUrl !== undefined) throw new CaeError('config_upstream');
   if (typeof c.tokenFile !== 'string' || !c.tokenFile || typeof c.logFile !== 'string' || !c.logFile) throw new CaeError('config_paths');
   if (!isObject(c.judge) || !['baseline', 'typesafe'].includes(c.judge.kind)) throw new CaeError('config_judge');
   if (typeof c.judge.model !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,159}$/.test(c.judge.model)) throw new CaeError('config_judge_model');
