@@ -14,12 +14,16 @@ User-visible changes are recorded here. Unreleased entries describe the current 
 
 ### Fixed
 
+- Reject non-object native metadata/control frames and safely ignore non-object SSE data without changing response bytes.
+- Bypass unknown or malformed history before evaluation; require response identity before committing a JSON completion lease.
+- Validate upstream kinds against own string allowlist entries and keep offline syntax checks within public source boundaries.
 - Preserve desktop provider overrides when native app-server uses subcommand-scoped configuration arguments.
 - Recognize native `ultra` capabilities without widening individual models' supported effort sets.
 - Handle headerless SSE for explicitly streaming requests and retain validated completion when a client closes after the terminal event.
 
 ### Validation
 
+- The 2026-09-28 [code review](docs/CODE_REVIEW_2026-09-28.md) added 12 regressions: 212 offline tests passed locally; new-commit CI and native acceptance remain separate evidence.
 - Real tests on one documented macOS/app/CLI combination covered CLI transport, desktop off/manual locks/cancellation/recovery, Jev shadow, automatic upshift/downshift and timeout fallback.
 - The runtime baseline passed 199 offline tests. Check the current commit's CI separately after documentation or tooling changes.
 - Jev timeouts remain unresolved. A 665 ms successful downshift under a 2000 ms deadline does not establish a benefit from the larger deadline. No quality, cost or general compatibility claims were added.

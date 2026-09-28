@@ -44,6 +44,29 @@ test('image evidence bypasses rather than pretending text is complete', () => {
   const b = body({ input: [{ role: 'user', content: [{ type: 'input_text', text: '修复这个' }, { type: 'input_image', image_url: 'data:image/png;base64,synthetic' }] }] });
   assert.equal(inspectRequest(b).eligible, false);
 });
+test('unknown or malformed history evidence bypasses instead of being silently omitted', () => {
+  for (const item of [null, 42, { type: 'future_evidence', data: 'unknown' },
+    { role: 'user', content: [{ type: 'future_content', text: 'unknown' }] },
+    { role: 'assistant', content: [{ type: 'output_text', text: 42 }] },
+    { type: 'function_call_output', output: 42 }]) {
+    const b = append(body(), item), original = structuredClone(b);
+    assert.equal(inspectRequest(b).eligible, false); assert.deepEqual(b, original);
+  }
+});
+test('recognized text, opaque reasoning and string tool history remain eligible', () => {
+  const b = body({ input: [
+    { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'Synthetic goal' }] },
+    { type: 'reasoning', encrypted_content: 'PRIVATE REASONING' },
+    { type: 'function_call', call_id: 'one', name: 'synthetic', arguments: '{"data":"PRIVATE ARGS"}' },
+    { type: 'function_call_output', call_id: 'one', output: 'ok' },
+    { type: 'custom_tool_call', call_id: 'two', name: 'synthetic', input: 'PRIVATE INPUT' },
+    { type: 'custom_tool_call_output', call_id: 'two', output: 'done' },
+    { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Public note' }] },
+  ] });
+  const original = structuredClone(b), snapshot = inspectRequest(b);
+  assert.equal(snapshot.eligible, true); assert.equal(snapshot.state.recentTools.length, 2);
+  assert(!JSON.stringify(snapshot.state).includes('PRIVATE')); assert.deepEqual(b, original);
+});
 for (const extra of [{ background: true }, { truncation: 'auto' }, { conversation: 'synthetic' },
   { context_management: [{ type: 'compaction', compact_threshold: 1000 }] }, { input: [] }]) {
   test('unsupported context is explicitly bypassed: ' + JSON.stringify(extra), () => assert.equal(inspectRequest(body(extra)).eligible, false));

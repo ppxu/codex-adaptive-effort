@@ -18,6 +18,17 @@ function textOf(content) {
 function hasMedia(content) {
   return Array.isArray(content) && content.some(p => isObject(p) && /image|audio|video|file/.test(p.type ?? ''));
 }
+function supportedItem(item) {
+  if (!isObject(item)) return false;
+  if (item.type === undefined || item.type === 'message') {
+    return ['user', 'assistant', 'system', 'developer'].includes(item.role) &&
+      (typeof item.content === 'string' || (Array.isArray(item.content) && item.content.every(p =>
+        isObject(p) && ['input_text', 'output_text', 'text'].includes(p.type) && typeof p.text === 'string')));
+  }
+  if (['function_call_output', 'custom_tool_call_output'].includes(item.type)) return typeof item.output === 'string';
+  // Retain opaque reasoning and call records for history integrity, never evaluator text.
+  return ['reasoning', 'function_call', 'custom_tool_call'].includes(item.type);
+}
 function failed(item) {
   if (item.is_error === true || item.success === false) return true;
   let out = item.output;
@@ -38,6 +49,7 @@ export function inspectRequest(body) {
   if (body.truncation && body.truncation !== 'disabled') return { eligible: false, reason: 'automatic_truncation' };
   if (items.some(i => isObject(i) && (hasMedia(i.content) || (typeof i.output === 'object' && i.output !== null))))
     return { eligible: false, reason: 'media_or_structured_tool_evidence' };
+  if (!items.every(supportedItem)) return { eligible: false, reason: 'unsupported_history_item' };
   const users = items.filter(i => isObject(i) && i.role === 'user');
   const latest = users.at(-1);
   if (!latest || !textOf(latest.content).trim()) return { eligible: false, reason: 'missing_user_goal' };

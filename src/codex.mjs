@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import { CaeError } from './util.mjs';
+import { CaeError, isObject } from './util.mjs';
 import { EFFORT_NAMES } from './config.mjs';
 
 export function nativeEnvironment(source = process.env) {
@@ -52,6 +52,7 @@ export async function probeModels(binary = 'codex', { args = ['app-server'], tim
     rl.on('line', line => {
       if (settled) return;
       let msg; try { msg = JSON.parse(line); } catch { finish(new CaeError('codex_probe_invalid_json')); return; }
+      if (!isObject(msg)) { finish(new CaeError('codex_probe_invalid_message')); return; }
       if (msg.id !== expected) return;
       if (msg.error) { finish(new CaeError('codex_probe_rpc_error')); return; }
       if (expected === 1) { send({ method: 'initialized', params: {} }); list(); return; }

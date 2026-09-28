@@ -15,6 +15,10 @@ function temp(t) { const p = mkdtempSync(join(tmpdir(), 'cae-test-')); t.after((
 test('default config is shadow, separate baseline evaluator, no auto model', () => {
   assert.equal(c().mode, 'shadow'); assert.equal(c().judge.kind, 'baseline'); assert.equal(c().model, 'synthetic-model');
 });
+test('upstream kinds must be own allowlist entries, not inherited properties or coerced keys', () => {
+  for (const kind of ['constructor', 'toString', '__proto__', ['api']])
+    assert.throws(() => validateConfig({ ...c(), upstream: { kind } }), /config_upstream/);
+});
 for (const [name, patch] of [ ['unknown field', { apiKey: 'synthetic' }], ['unsupported effort', { supportedEfforts: ['unlimited'] }],
   ['wrong baseline', { baseline: 'max' }], ['huge port', { port: 999999 }], ['redirect upstream', { upstream: { kind: 'api', baseUrl: 'https://other.example' } }],
   ['non-loopback mock', { upstream: { kind: 'mock', baseUrl: 'http://example.com:80' } }],
@@ -84,7 +88,7 @@ test('ultra support retains rejection of unknown efforts and absent model capabi
 test('unsupported model metadata counted, not silently fabricated', async () => {
   const result = await probeModels(process.execPath, { args: [fixture, 'bad-model'] }); assert.equal(result.skippedUnsupportedEntries, 1); assert.deepEqual(result.models, []);
 });
-for (const [scenario, code] of [['invalid', 'codex_probe_invalid_json'], ['rpc-error', 'codex_probe_rpc_error'], ['loop', 'codex_probe_cursor_loop'], ['silent', 'codex_probe_timeout']]) {
+for (const [scenario, code] of [['invalid', 'codex_probe_invalid_json'], ['null', 'codex_probe_invalid_message'], ['rpc-error', 'codex_probe_rpc_error'], ['loop', 'codex_probe_cursor_loop'], ['silent', 'codex_probe_timeout']]) {
   test('probe safely stops: ' + scenario, async () => {
     await assert.rejects(probeModels(process.execPath, { args: [fixture, scenario], timeoutMs: scenario === 'silent' ? 100 : 3000 }), e => e.code === code);
   });

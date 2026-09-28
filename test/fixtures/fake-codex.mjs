@@ -9,6 +9,7 @@ rl.on('line', line => {
   const m = JSON.parse(line);
   if (scenario === 'silent') return;
   if (m.method === 'initialize') {
+    if (scenario === 'null') { send(null); return; }
     if (scenario === 'invalid') { process.stdout.write('not-json\n'); return; }
     send({ id: m.id, result: { userAgent: 'synthetic' } }); return;
   }

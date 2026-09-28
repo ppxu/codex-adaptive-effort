@@ -7,7 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { CaeError, digest, equalSecret } from './util.mjs';
+import { CaeError, digest, equalSecret, isObject } from './util.mjs';
 import { defaultConfig, loadConfig, readLocalToken } from './config.mjs';
 import { codexArgs, probeModels, nativeEnvironment } from './codex.mjs';
 import { startProxy } from './proxy.mjs';
@@ -79,7 +79,9 @@ export async function verifyDesktopProvider(binary, args, config, { timeoutMs = 
     child.on('exit', () => { if (!settled) finish(new CaeError('desktop_config_exited')); });
     child.stdout.on('data', b => { bytes += b.length; if (bytes > 4 * 1024 * 1024) finish(new CaeError('desktop_config_output_limit')); });
     rl.on('line', line => {
+      if (settled) return;
       let msg; try { msg = JSON.parse(line); } catch { finish(new CaeError('desktop_config_invalid_json')); return; }
+      if (!isObject(msg)) { finish(new CaeError('desktop_config_invalid_message')); return; }
       if (msg.id !== 1 && msg.id !== 2) return;
       if (msg.error) { finish(new CaeError('desktop_config_rpc_error')); return; }
       if (msg.id === 1) { send({ method: 'initialized', params: {} }); send({ id: 2, method: 'config/read', params: { includeLayers: false } }); return; }
@@ -214,6 +216,7 @@ export async function startDesktop(options, dependencies = {}) {
       if (!input.includes('\n')) return;
       socket.removeAllListeners('data'); let message;
       try { message = JSON.parse(input.split('\n')[0]); } catch { socket.destroy(); return; }
+      if (!isObject(message)) { socket.destroy(); return; }
       if (!equalSecret(message.token, token)) { socket.end(JSON.stringify({ error: 'local_auth_required' }) + '\n'); return; }
       if (message.action === 'bridge-ready') { ++bridgeChecks; maybeReady(); }
       else if (!['status', 'stop'].includes(message.action)) { socket.end(JSON.stringify({ error: 'desktop_unknown_action' }) + '\n'); return; }

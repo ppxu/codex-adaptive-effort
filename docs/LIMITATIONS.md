@@ -25,6 +25,8 @@ The dated [local acceptance record](LOCAL_ACCEPTANCE.md) describes the tested ma
 
 Manual lock is instance-wide and only changes eligible `auto` requests. `off` and `shadow` never change effort, even with a lock set. To retain original execution without Jev cost use `off`; to remove the entire proxy from the path restart ordinary Codex.
 
+History eligibility is conservative: recognized text messages, opaque reasoning/call records and string tool outputs are supported. Unknown item/content types, malformed text and non-string tool outputs bypass unchanged with no evaluator call; a manual lock does not override this boundary. See the [code review](CODE_REVIEW_2026-09-28.md).
+
 The [desktop launcher](DESKTOP_LAUNCHER.md) is limited to the validated macOS arm64 app/CLI combination. It shares the native Codex home, does not migrate old threads, and requires a new local thread to use the configured provider. Normal stop and terminal interruption are tested; forced supervisor death and stale socket recovery require manual inspection. No native UI title patch or packaged plugin is provided.
 
 A server process lifetime cap is not a spending guarantee. Services may bill requests that time out or are cancelled. No trial uses a real key unless the operator explicitly enables it.

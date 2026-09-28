@@ -7,6 +7,20 @@ import { ResponseObserver } from '../src/stream.mjs';
 import { Audit, usageOf, report } from '../src/audit.mjs';
 import { completedSse } from './helpers.mjs';
 
+test('non-object SSE data is ignored and later terminal metadata remains observable', () => {
+  const o = new ResponseObserver('text/event-stream');
+  for (const value of [null, [], 42, false, 'text']) o.push(Buffer.from(`data: ${JSON.stringify(value)}\n\n`));
+  assert.equal(o.completed, false);
+  o.push(completedSse()); assert.equal(o.end().completed, true);
+});
+test('JSON completion requires a nonempty response identity', () => {
+  for (const id of [undefined, null, '', 42]) {
+    const o = new ResponseObserver('application/json');
+    o.push(Buffer.from(JSON.stringify({ id, status: 'completed', usage: { output_tokens: 3 } })));
+    const result = o.end(); assert.equal(result.completed, false); assert.equal(result.outputTokens, 3);
+  }
+});
+
 test('UTF8 SSE fragmented byte-by-byte yields exact terminal usage', () => {
   const o = new ResponseObserver('text/event-stream'); for (const byte of completedSse()) o.push(Buffer.from([byte]));
   assert.deepEqual(o.end(), { completed: true, terminal: 'response.completed', inputTokens: 100, cachedInputTokens: 40, outputTokens: 20, reasoningTokens: 8 });
