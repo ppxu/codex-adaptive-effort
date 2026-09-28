@@ -2,7 +2,7 @@
 
 **固定执行模型，动态调整思考强度。** 这是面向本地 Codex 的实验性开源控制器，设计借鉴 Astra-Ares 的固定模型/决策生命周期，以及 Jev Codex Router 的本地代理/有限判断摘要。
 
-**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。正式桌面安装、真实 Jev 和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
+**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面自动判断、正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
 
 [English](README.en.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
 
