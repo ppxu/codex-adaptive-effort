@@ -84,6 +84,8 @@ API 使用者须从初始化起明确选择 `--auth api`，再在自己的终端
 
 ## 启用 Jev
 
+建议先执行 [固定合成样例 shadow 验收](docs/JEV_SHADOW_ACCEPTANCE.md)：默认只预览，授权后最多 8 次 Jev 请求，不发起 Codex 生成。它用于验证真实判断器；当前桌面启动器仍只支持 baseline，下面的服务配置步骤不适用于桌面启动器。
+
 默认 `judge.kind=baseline` **不是复杂度判断器**，只是接线验收用的固定基准。要接入 Jev：停止服务，在 `.cae/config.json` 将 `judge.kind` 改为 `typesafe`，通过你自己的密钥管理方式设置 `TYPESAFE_API_KEY`，然后显式执行：
 
 ```bash

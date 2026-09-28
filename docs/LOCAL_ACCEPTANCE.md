@@ -202,4 +202,6 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+2026-09-28 后续自动判断准备：见 [Jev shadow 验收](JEV_SHADOW_ACCEPTANCE.md)。新增固定合成样例运行器与 lease 独立问题修复；181 项离线测试通过，最新原生探针退出 0。真实 Jev 尚未调用，桌面自动判断仍未验收，既有手动传输结果不代表自动判断质量。
+
 原始 verify/回归输出和临时验收驱动保存在被忽略的 `*.local.txt`；doctor、修复前后 capability、预检和真实传输摘要保存在被忽略的 `*.local.json`；隔离 .cae、原生输出和仅记录元数据的诊断在系统临时目录。它们均不属于提交候选。报告不含用户目录、登录账号、令牌或真实任务内容。最终仅保留相关源码、合成测试和本报告的改动，已有 SOURCE_MANIFEST.json 不变。
