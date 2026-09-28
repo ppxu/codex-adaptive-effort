@@ -17,7 +17,9 @@ Requires Node >=22.16. No third-party runtime dependencies. Verification uses sy
 
 **Local acceptance:** one macOS arm64 installation passed native CLI transport over the ChatGPT route, off, read-only tools, multi-turn continuation, plain-text manual low/high locks, cancellation and recovery. See [the dated acceptance record](docs/LOCAL_ACCEPTANCE.md) for the exact client, model and limitations. Structured tool-result histories still bypass adaptation, including manual locks.
 
-**Not established:** desktop integration, other client/account environments, live Jev, long-session acceptance, Chinese classification quality, task quality equivalence, cache benefits or monetary savings. WebSockets, native patches and `configuration_update` insertion are not implemented. Compacted, incremental or multimodal histories bypass effort adaptation. Request-level effort changes may affect caching.
+An independent instance of the installed desktop app also passed off, plain-text low/high locks, cancellation and same-thread recovery after an app-server argument-scope fix. See [desktop acceptance](docs/DESKTOP_ACCEPTANCE.md). This covers its Codex programming surface, not ordinary ChatGPT chats or a packaged desktop plugin.
+
+**Not established:** packaged desktop integration, other client/account environments, live Jev, long-session acceptance, Chinese classification quality, task quality equivalence, cache benefits or monetary savings. WebSockets, native patches and `configuration_update` insertion are not implemented. Compacted, incremental or multimodal histories bypass effort adaptation. Request-level effort changes may affect caching.
 
 See [Chinese quickstart](README.md), [local validation](docs/LOCAL_VALIDATION.md), [architecture](docs/ARCHITECTURE.md), [limits](docs/LIMITATIONS.md), [validation evidence](docs/VALIDATION.md) and [publication](docs/PUBLISHING.md).
 

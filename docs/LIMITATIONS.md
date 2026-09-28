@@ -1,12 +1,12 @@
 # Known limitations and acceptance boundaries
 
-The dated [local acceptance record](LOCAL_ACCEPTANCE.md) describes the tested macOS CLI subset. It does not establish desktop integration or general production readiness.
+The dated [local acceptance record](LOCAL_ACCEPTANCE.md) describes the tested macOS CLI subset; [desktop acceptance](DESKTOP_ACCEPTANCE.md) covers an independent desktop instance on that installation. Neither establishes packaged desktop integration or general production readiness.
 
 | Area | What is true now | What is not established |
 |---|---|---|
 | Code delivery | Runnable original Node ESM source, tests, offline demo | No claim of maintained production service |
-| Proxy | Synthetic HTTP/SSE tests plus a real CLI ChatGPT-route acceptance run | No native desktop/WebSocket acceptance |
-| Codex | Native model/list, isolated CLI, plain-text manual locks, tools in off, cancellation/recovery tested on one installation | Other client versions and desktop launch/integration |
+| Proxy | Synthetic HTTP/SSE tests plus real CLI and isolated desktop ChatGPT-route acceptance | No WebSocket acceptance |
+| Codex | Native model/list, isolated CLI, desktop plain-text off/locks/cancellation/recovery; CLI tools in off tested on one installation | Other client versions, packaged desktop installation, ordinary ChatGPT chats |
 | ChatGPT auth | Native authentication worked for the recorded CLI run; CAE does not read login files | Other accounts, environments, attestation and client versions |
 | API auth | Explicit separate api route; normal API key remains caller-owned | A subscription is not API credit; no live API request was made |
 | Jev | TypeSafe HTTP contract implemented; parsing/failure/cancellation tested with fake responses | Live provider response and Chinese task classification quality |
@@ -27,4 +27,4 @@ Manual lock is instance-wide and only changes eligible `auto` requests. `off` an
 
 A server process lifetime cap is not a spending guarantee. Services may bill requests that time out or are cancelled. No trial uses a real key unless the operator explicitly enables it.
 
-Release blockers for any stable claim: independent security review; real native CLI acceptance for both intended auth paths; desktop-specific integration; long-session/compaction acceptance; low/normal/hard task comparisons including Chinese short follow-ups; actual quality, cache, latency and cost observations. Until then, treat this as a protocol-level alpha.
+Release blockers for any stable claim: independent security review; real native CLI acceptance for both intended auth paths; packaged desktop integration and upgrade compatibility; long-session/compaction acceptance; low/normal/hard task comparisons including Chinese short follow-ups; actual quality, cache, latency and cost observations. Until then, treat this as a protocol-level alpha.

@@ -102,14 +102,14 @@ async function main() {
     print({ ...report(records), malformedLines }); return;
   }
   if (['codex', 'launch-args'].includes(command)) {
-    const args = codexArgs(c, v.auth);
-    if (command === 'launch-args') { print({ command: v.codex, args: [...args, ...passthrough], requiredEnvironmentNames: ['CAE_LOCAL_TOKEN', ...(v.auth === 'api' ? ['OPENAI_API_KEY'] : [])] }); return; }
+    const args = codexArgs(c, v.auth, passthrough);
+    if (command === 'launch-args') { print({ command: v.codex, args, requiredEnvironmentNames: ['CAE_LOCAL_TOKEN', ...(v.auth === 'api' ? ['OPENAI_API_KEY'] : [])] }); return; }
     const health = await localCall(c, '/health');
     if (!health.ok || health.model !== c.model) throw new CaeError('proxy_health_mismatch');
     if (v.auth === 'api' && !process.env.OPENAI_API_KEY) throw new CaeError('missing_openai_api_key');
     const env = { ...process.env, CAE_LOCAL_TOKEN: readLocalToken(c.tokenFile) };
     delete env.TYPESAFE_API_KEY;
-    const child = spawn(v.codex, [...args, ...passthrough], { env, stdio: 'inherit', shell: false });
+    const child = spawn(v.codex, args, { env, stdio: 'inherit', shell: false });
     child.once('error', () => { console.error('CAE: codex_not_available'); process.exitCode = 1; });
     child.once('exit', code => { process.exitCode = code ?? 1; }); return;
   }

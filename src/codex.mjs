@@ -62,7 +62,7 @@ export async function probeModels(binary = 'codex', { args = ['app-server'], tim
     send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'codex_adaptive_effort', version: '0.1.0-alpha.1' } } });
   });
 }
-export function codexArgs(config, auth) {
+export function codexArgs(config, auth, passthrough = []) {
   if (!['api', 'chatgpt'].includes(auth) || config.upstream.kind !== auth) throw new CaeError('auth_route_mismatch');
   if (!config.port) throw new CaeError('fixed_port_required_for_codex');
   const pairs = {
@@ -79,5 +79,18 @@ export function codexArgs(config, auth) {
   };
   if (auth === 'chatgpt') pairs['model_providers.cae.requires_openai_auth'] = true;
   else { pairs['model_providers.cae.requires_openai_auth'] = false; pairs['model_providers.cae.env_key'] = 'OPENAI_API_KEY'; }
-  return Object.entries(pairs).flatMap(([key, value]) => ['-c', `${key}=${value === null ? '{"x-cae-token"="CAE_LOCAL_TOKEN"}' : JSON.stringify(value)}`]);
+  const overrides = Object.entries(pairs).flatMap(([key, value]) => ['-c', `${key}=${value === null ? '{"x-cae-token"="CAE_LOCAL_TOKEN"}' : JSON.stringify(value)}`]);
+  // Desktop supplies root -c flags and app-server-local -c flags. Native CLI
+  // discards the root config collection when the subcommand has its own.
+  // Recognize the desktop prefix without mistaking an exec prompt or a config
+  // value for a subcommand; other launch shapes keep their existing ordering.
+  let command = 0;
+  while (command < passthrough.length) {
+    if (['-c', '--config'].includes(passthrough[command]) && command + 1 < passthrough.length) command += 2;
+    else if (passthrough[command].startsWith('--config=')) ++command;
+    else break;
+  }
+  if (passthrough[command] === 'app-server')
+    return [...passthrough.slice(0, command + 1), ...overrides, ...passthrough.slice(command + 1)];
+  return [...overrides, ...passthrough];
 }

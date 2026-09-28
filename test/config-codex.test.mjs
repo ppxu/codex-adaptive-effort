@@ -102,3 +102,30 @@ test('CLI requires auth rather than silently choosing API spending', t => {
   const r = spawnSync(process.execPath, [cli, 'init', '--model', 'synthetic-model', '--efforts', 'low,high', '--baseline', 'high'], { cwd: temp(t), encoding: 'utf8' });
   assert.equal(r.status, 1); assert(r.stderr.includes('init_requires_model_and_auth'));
 });
+
+test('desktop app-server keeps CAE overrides in the subcommand config scope', t => {
+  const p = temp(t), config = join(p, 'config.json'), value = c();
+  value.upstream.kind = 'chatgpt'; writeFileSync(config, JSON.stringify(value));
+  for (const prefix of [[], ['-c', 'features.code_mode_host=true'], ['--config=features.code_mode_host=true']]) {
+    const desktop = [...prefix, 'app-server', '--analytics-default-enabled', '-c', 'plugins.example.enabled=true'];
+    const r = spawnSync(process.execPath, [cli, 'launch-args', '--config', config, '--auth', 'chatgpt', '--', ...desktop], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    const { args } = JSON.parse(r.stdout);
+    // Native app-server uses its own -c collection when it has overrides.
+    const effective = args.slice(args.indexOf('app-server') + 1);
+    assert(effective.includes('model_provider="cae"'));
+    assert(effective.includes('model="synthetic-model"'));
+    assert(effective.includes('model_providers.cae.requires_openai_auth=true'));
+    assert(effective.includes('plugins.example.enabled=true'));
+    assert.deepEqual(args.slice(0, prefix.length), prefix);
+  }
+});
+
+test('launcher does not confuse config values or exec prompts with app-server', t => {
+  const p = temp(t), config = join(p, 'config.json'); writeFileSync(config, JSON.stringify(c()));
+  for (const passthrough of [['exec', 'app-server'], ['-c', 'app-server', 'exec', 'hello'], ['--', 'app-server']]) {
+    const r = spawnSync(process.execPath, [cli, 'launch-args', '--config', config, '--auth', 'api', '--', ...passthrough], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(JSON.parse(r.stdout).args, [...codexArgs(c(), 'api'), ...passthrough]);
+  }
+});

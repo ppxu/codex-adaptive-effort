@@ -1,5 +1,9 @@
 # 本机 Codex 兼容性验收 / 2026-09-28
 
+后续发布核对：本报告对应的修复已提交为 `3c13aac2dcad333fae689b1273d3d4657bf90b8d` 并推送 main；[该提交 CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36371612189) 六项全部成功。下文旧基线/未提交措辞保留采集时状态。随后进行的独立桌面实例启动检查见 [DESKTOP_ACCEPTANCE.md](DESKTOP_ACCEPTANCE.md)，尚不代表桌面真实传输验收通过。
+
+桌面人工测试后续：首次回复成功但绕过 CAE，已修复 app-server 子命令 -c 覆盖前置 CAE 参数的问题。新增两项回归，155 项本机测试通过；原生 config/read 确认修复后 provider=cae。随后新会话 off、纯文本 low/high、桌面取消与同会话恢复全部通过，实验进程已清理。采集时该补丁未提交，不能以旧 CI 代替补丁 CI；源码哈希、真实发送与收尾证据见 [DESKTOP_ACCEPTANCE.md](DESKTOP_ACCEPTANCE.md)。
+
 结论：用户确认授权后，已通过本机 ChatGPT 路线的真实 CLI HTTP/SSE、off、只读工具与多轮、纯文本 low/high 手动锁档、取消及同会话恢复验收。**含结构化工具结果的历史仍会旁路，不能宣称所有 Codex 任务都能改档。** 未启用 Jev、API 付费路线或桌面集成。下文保留零生成预检和随后真实验收两阶段的证据。
 
 ## 源码与环境
