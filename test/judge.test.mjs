@@ -9,6 +9,12 @@ test('typed contract offers only supported efforts, not model routing', () => {
   const q = questions(efforts, 4); assert.deepEqual(Object.keys(q), ['effort', 'lease']);
   assert.deepEqual(Object.keys(q.effort.criteria), efforts); assert.equal(Object.keys(q.lease.criteria).length, 4);
 });
+test('ultra criterion survives JSON serialization only when supported', () => {
+  const criteria = JSON.parse(JSON.stringify(questions(['low', 'ultra'], 1))).effort.criteria;
+  assert.deepEqual(Object.keys(criteria), ['low', 'ultra']);
+  assert.equal(typeof criteria.ultra, 'string');
+  assert(!Object.hasOwn(questions(efforts, 1).effort.criteria, 'ultra'));
+});
 test('valid response parses typed choices and reports conservative diagnostic confidence', () => {
   assert.deepEqual(parseAnswers(valid(), efforts, 4), { effort: 'medium', lease: 2, confidence: 0.7, judgeInputTokens: 12 });
 });

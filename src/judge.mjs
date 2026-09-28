@@ -8,6 +8,7 @@ const DEPTHS = Object.freeze({
   high: 'Substantial debugging, architecture, safety analysis or interacting trade-offs.',
   xhigh: 'Extended difficult investigation or broad, ambiguous synthesis.',
   max: 'Exceptional hardest case needing the greatest available reasoning budget.',
+  ultra: 'Most demanding investigation when the executing model explicitly supports ultra.',
 });
 export function questions(efforts, maxLease) {
   return {

@@ -47,6 +47,27 @@ test('fake app-server probe observes supported efforts with no generation', asyn
 test('fake app-server pagination completes', async () => {
   const result = await probeModels(process.execPath, { args: [fixture, 'pages'] }); assert.equal(result.models.length, 2);
 });
+test('probe with ultra survives capability initialization and launch without widening efforts', async t => {
+  const result = await probeModels(process.execPath, { args: [fixture, 'ultra'] });
+  assert.equal(result.skippedUnsupportedEntries, 0);
+  assert.deepEqual(result.models, [{ model: 'synthetic-model', baseline: 'medium',
+    supportedEfforts: ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'] }]);
+  const p = temp(t), capture = join(p, 'capabilities.json'), target = join(p, 'isolated');
+  writeFileSync(capture, JSON.stringify(result));
+  const init = spawnSync(process.execPath, [cli, 'init', '--dir', target, '--model', 'synthetic-model',
+    '--auth', 'chatgpt', '--capabilities', capture], { cwd: p, encoding: 'utf8' });
+  assert.equal(init.status, 0, init.stderr);
+  const loaded = loadConfig(join(target, 'config.json'));
+  assert.equal(loaded.baseline, 'medium');
+  assert.deepEqual(loaded.supportedEfforts, result.models[0].supportedEfforts);
+  assert(codexArgs({ ...loaded, baseline: 'ultra' }, 'chatgpt').includes('model_reasoning_effort="ultra"'));
+});
+test('ultra support retains rejection of unknown efforts and absent model capabilities', () => {
+  assert.equal(normalizeModel({ model: 'synthetic-model', defaultReasoningEffort: 'high',
+    supportedReasoningEfforts: [{ reasoningEffort: 'high' }, { reasoningEffort: 'future' }] }), null);
+  assert.throws(() => validateConfig({ ...c(), baseline: 'ultra' }), /config_baseline/);
+  assert.equal(defaultConfig('synthetic-model', ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'], 'ultra').baseline, 'ultra');
+});
 test('unsupported model metadata counted, not silently fabricated', async () => {
   const result = await probeModels(process.execPath, { args: [fixture, 'bad-model'] }); assert.equal(result.skippedUnsupportedEntries, 1); assert.deepEqual(result.models, []);
 });

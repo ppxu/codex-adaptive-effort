@@ -2,7 +2,7 @@ import { readFileSync, lstatSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { CaeError, isObject } from './util.mjs';
 
-export const EFFORT_NAMES = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+export const EFFORT_NAMES = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'];
 export const UPSTREAMS = Object.freeze({
   api: 'https://api.openai.com/v1',
   chatgpt: 'https://chatgpt.com/backend-api/codex',
@@ -13,7 +13,7 @@ export function validateConfig(c) {
     'tokenFile', 'logFile', 'judge', 'lease', 'maxBodyBytes', 'upstreamTimeoutMs', 'capabilitySource'];
   if (Object.keys(c).some(k => !allowed.includes(k))) throw new CaeError('unknown_config_field');
   if (typeof c.model !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,159}$/.test(c.model)) throw new CaeError('config_model');
-  if (!Array.isArray(c.supportedEfforts) || c.supportedEfforts.length < 1 || c.supportedEfforts.length > 7 ||
+  if (!Array.isArray(c.supportedEfforts) || c.supportedEfforts.length < 1 || c.supportedEfforts.length > EFFORT_NAMES.length ||
       new Set(c.supportedEfforts).size !== c.supportedEfforts.length ||
       c.supportedEfforts.some(v => !EFFORT_NAMES.includes(v))) throw new CaeError('config_efforts');
   if (!c.supportedEfforts.includes(c.baseline)) throw new CaeError('config_baseline');

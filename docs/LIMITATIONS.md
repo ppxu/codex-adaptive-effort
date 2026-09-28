@@ -1,25 +1,27 @@
 # Known limitations and acceptance boundaries
 
+The dated [local acceptance record](LOCAL_ACCEPTANCE.md) describes the tested macOS CLI subset. It does not establish desktop integration or general production readiness.
+
 | Area | What is true now | What is not established |
 |---|---|---|
 | Code delivery | Runnable original Node ESM source, tests, offline demo | No claim of maintained production service |
-| Proxy | Local HTTP/SSE tested against a synthetic upstream | No real native desktop/WebSocket acceptance |
-| Codex | Model/list client and one-off CLI parameter builder, fake subprocess tests | No real installed Codex was available in the development container |
-| ChatGPT auth | Does not read auth files; relays native HTTP authorization to a fixed backend | Actual account, attestation, endpoint and client-version compatibility |
+| Proxy | Synthetic HTTP/SSE tests plus a real CLI ChatGPT-route acceptance run | No native desktop/WebSocket acceptance |
+| Codex | Native model/list, isolated CLI, plain-text manual locks, tools in off, cancellation/recovery tested on one installation | Other client versions and desktop launch/integration |
+| ChatGPT auth | Native authentication worked for the recorded CLI run; CAE does not read login files | Other accounts, environments, attestation and client versions |
 | API auth | Explicit separate api route; normal API key remains caller-owned | A subscription is not API credit; no live API request was made |
 | Jev | TypeSafe HTTP contract implemented; parsing/failure/cancellation tested with fake responses | Live provider response and Chinese task classification quality |
 | Model efforts | Supplied by actual capability probe or operator | No hardcoded assurance that any model supports all known effort names |
 | Cache | Cache controls/history preserved; request-level effort only | No configuration_update insertion, cached-prefix preservation or measured savings |
 | Context | Limited Unicode character excerpts and omission counts | Not token-exact, not all long-history requirements, no image/audio understanding |
 | Errors | Explicit structured tool failure fields recognized | A plain text log can hide failure; content classification remains Jev's job |
-| Bypass | Unsupported requests retain original bytes | Native compatibility of every bypassed history shape is still untested |
+| Bypass | Unsupported requests retain original bytes; structured tool-result history bypass was observed in a real session and is an accepted current boundary | Not every native history shape is tested; manual locks do not override the bypass |
 | Sessions | Explicit header plus auth partition; otherwise no cross-call lease | Cannot infer a reliable session from cache keys or message similarity |
 | Completion | Recognized SSE/JSON terminal metadata | A setting in a response does not prove actual reasoning allocation |
 | Usage | Known counters and unknowns separated; evaluator attempts recorded | Dollar savings, account quota debits, quality equivalence and full-task costs |
 | Other costs | Generation endpoint observed | Compaction costs, invisible retries, incomplete usage and external provider debits may be missing |
 | Security | Local auth/Host/origin checks, bounded state, metadata logs, no redirects | Not resistant to a malicious same-user process; redaction is not total confidentiality |
 | Recovery | No global config writes; normal Codex relaunch restores ordinary path | Proxy crash is not automatic failover |
-| Publication | Safe fresh-source publishing script, CI workflow included | Remote repo and GitHub Actions success require actual external execution |
+| Publication | Existing public repository; baseline CI success verified | Every new commit needs its own CI result; never reuse an older commit's result |
 
 Manual lock is instance-wide and only changes eligible `auto` requests. `off` and `shadow` never change effort, even with a lock set. To retain original execution without Jev cost use `off`; to remove the entire proxy from the path restart ordinary Codex.
 

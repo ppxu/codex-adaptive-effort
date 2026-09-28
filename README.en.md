@@ -15,7 +15,9 @@ node bin/cae.mjs doctor
 
 Requires Node >=22.16. No third-party runtime dependencies. Verification uses synthetic local HTTP/SSE and a fake app-server. No paid providers or real Codex sessions are run during tests.
 
-**Not established:** real Codex desktop/subscription compatibility, long-session acceptance, Chinese classification quality, task quality equivalence, cache benefits or monetary savings. WebSockets, native patches and `configuration_update` insertion are not implemented. Compacted, incremental or multimodal histories bypass effort adaptation. Request-level effort changes may affect caching.
+**Local acceptance:** one macOS arm64 installation passed native CLI transport over the ChatGPT route, off, read-only tools, multi-turn continuation, plain-text manual low/high locks, cancellation and recovery. See [the dated acceptance record](docs/LOCAL_ACCEPTANCE.md) for the exact client, model and limitations. Structured tool-result histories still bypass adaptation, including manual locks.
+
+**Not established:** desktop integration, other client/account environments, live Jev, long-session acceptance, Chinese classification quality, task quality equivalence, cache benefits or monetary savings. WebSockets, native patches and `configuration_update` insertion are not implemented. Compacted, incremental or multimodal histories bypass effort adaptation. Request-level effort changes may affect caching.
 
 See [Chinese quickstart](README.md), [local validation](docs/LOCAL_VALIDATION.md), [architecture](docs/ARCHITECTURE.md), [limits](docs/LIMITATIONS.md), [validation evidence](docs/VALIDATION.md) and [publication](docs/PUBLISHING.md).
 

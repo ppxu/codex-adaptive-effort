@@ -2,7 +2,7 @@
 
 **固定执行模型，动态调整思考强度。** 这是面向本地 Codex 的实验性开源控制器，设计借鉴 Astra-Ares 的固定模型/决策生命周期，以及 Jev Codex Router 的本地代理/有限判断摘要。
 
-**当前版本：`0.1.0-alpha.1`。** 有真实可运行的 Node.js 代码、自动化测试和本地 HTTP/SSE 演示；不是只有规划的项目，也不是已获官方支持的 Codex 桌面插件。真实 Codex、ChatGPT 订阅链路和 Jev 服务仍需在使用者机器上验收。没有节省费用、保持质量或生产可用性的保证。
+**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI、HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md)。桌面端、真实 Jev 和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
 
 [English](README.en.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
 
@@ -67,7 +67,7 @@ node bin/cae.mjs serve --enable-upstream
 node bin/cae.mjs codex --auth chatgpt --
 ```
 
-ChatGPT 订阅链路包含认证、版本、传输等兼容性条件，**本版没有做真实验收**。出现认证/协议错误时停止接入、保留原版 Codex；不能通过导出 Cookie、拷贝网页凭证或改用 API 付费来假装修复。
+ChatGPT 路线已完成上述限定版本的 CLI 验收，不能外推到桌面端或所有客户端版本。结构化工具结果的历史仍安全旁路，手动锁档也不越过该保护。出现认证/协议错误时停止接入、保留原版 Codex；不能通过导出 Cookie、拷贝网页凭证或改用 API 付费来假装修复。
 
 API 使用者须从初始化起明确选择 `--auth api`，再在自己的终端提供 `OPENAI_API_KEY`。两种路线不能混用，代码会检查。API 请求可能按量计费；此工具不把订阅额度转换成 API 额度。
 

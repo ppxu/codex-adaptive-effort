@@ -15,6 +15,10 @@ rl.on('line', line => {
   if (m.method !== 'model/list' || !initialized) { send({ id: m.id, error: { code: -1 } }); return; }
   const model = { model: 'synthetic-model', defaultReasoningEffort: 'high',
     supportedReasoningEfforts: [{ reasoningEffort: 'low' }, { reasoningEffort: 'high' }] };
+  if (scenario === 'ultra') {
+    model.defaultReasoningEffort = 'medium';
+    model.supportedReasoningEfforts = ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].map(reasoningEffort => ({ reasoningEffort }));
+  }
   if (scenario === 'rpc-error') { send({ id: m.id, error: { code: -1, message: 'private native error' } }); return; }
   if (scenario === 'bad-model') { send({ id: m.id, result: { data: [{ model: 'synthetic', supportedReasoningEfforts: 42 }], nextCursor: null } }); return; }
   if (scenario === 'loop') { send({ id: m.id, result: { data: [], nextCursor: 'same' } }); return; }

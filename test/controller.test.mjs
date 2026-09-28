@@ -81,6 +81,15 @@ test('manual lock suppresses judge and overrides effort in auto', async () => {
   const [c, j] = setup(); c.control({ lockedEffort: 'medium' }); const tx = await c.prepare(body());
   assert.equal(tx.body.reasoning.effort, 'medium'); assert.equal(j.calls, 0); done(c, tx);
 });
+test('ultra manual lock is model-specific and changes only reasoning effort', async () => {
+  const [c, j] = setup({ supportedEfforts: ['low', 'high', 'ultra'] });
+  c.control({ lockedEffort: 'ultra' });
+  const original = body(), tx = await c.prepare(original);
+  assert.deepEqual(tx.body, { ...original, reasoning: { ...original.reasoning, effort: 'ultra' } });
+  assert.equal(j.calls, 0); done(c, tx);
+  const [unsupported] = setup();
+  assert.throws(() => unsupported.control({ lockedEffort: 'ultra' }), /unsupported_lock/);
+});
 test('invalid controls fail atomically', () => {
   const [c] = setup(); assert.throws(() => c.control({ mode: 'off', lockedEffort: 'future' }), /unsupported_lock/); assert.equal(c.mode, 'auto');
   assert.throws(() => c.control({ dangerous: true }), /invalid_control/);

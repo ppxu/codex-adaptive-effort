@@ -15,6 +15,43 @@ test('real loopback auto request changes effort only; SSE bytes are identical', 
   const out = h.events.find(e => e.event === 'upstream_outcome'); assert.equal(out.inputTokens, 100); assert.equal(out.reasoningTokens, 8);
   assert.equal(out.completed, true); assert.equal(h.records.length, 1);
 });
+test('stream request observes headerless SSE without changing bytes or response headers', async t => {
+  const h = await harness(t, { handler: (_req, res) => {
+    res.writeHead(200); res.end(completedSse());
+  } });
+  const b = body(), response = await h.request(b);
+  assert.equal(response.headers.get('content-type'), null);
+  assert.deepEqual(await consume(response), completedSse());
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, true);
+  assert.equal(h.events.at(-1).inputTokens, 100);
+  await consume(await h.request(append(b)));
+  assert.equal(h.judge.calls, 1);
+});
+test('headerless SSE still requires a valid terminal and explicit stream request', async t => {
+  const h = await harness(t, { handler: (_req, res, _record, hit) => {
+    res.writeHead(200);
+    res.end(hit === 1 ? 'data: [DONE]\n\n' : completedSse());
+  } });
+  await consume(await h.request());
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, false);
+  assert.equal(h.proxy.controller.sessions.size, 0);
+  await consume(await h.request(body({ stream: false })));
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, false);
+  assert.equal(h.proxy.controller.sessions.size, 0);
+});
+test('explicit JSON content type takes precedence over requested streaming', async t => {
+  const bytes = JSON.stringify({ id: 'synthetic-json', status: 'completed', usage: { output_tokens: 3 } });
+  const h = await harness(t, { handler: (_req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' }); res.end(bytes);
+  } });
+  assert.equal(await (await h.request()).text(), bytes);
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, true);
+  assert.equal(h.events.at(-1).outputTokens, 3);
+});
 test('shadow preserves original JSON bytes, whitespace and Unicode', async t => {
   const h = await harness(t, { cfg: { mode: 'shadow' } }); const raw = '\n  ' + JSON.stringify(body(), null, 3) + '\n';
   await consume(await h.request(raw)); assert.equal(h.records[0].bytes.toString(), raw); assert.equal(h.judge.calls, 1);
@@ -123,6 +160,26 @@ test('cancel during upstream stream closes upstream and clears lease', async t =
   const a = new AbortController(); const res = await h.request(body(), { signal: a.signal });
   a.abort(); await assert.rejects(res.text()); await eventually(() => upstreamClosed && h.proxy.controller.active.size === 0);
   assert.equal(h.records.length, 1); assert.equal(h.proxy.controller.sessions.size, 0);
+});
+test('native client closing after a valid completed SSE event preserves completion and lease', async t => {
+  let upstreamClosed = false;
+  const h = await harness(t, { handler: (_req, res) => {
+    res.on('close', () => { upstreamClosed = true; });
+    res.writeHead(200); res.write(completedSse()); // Native client need not wait for HTTP EOF.
+  } });
+  await new Promise((resolve, reject) => {
+    const req = http.request(h.base + '/v1/responses', { method: 'POST', headers: h.headers }, res => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; if (data.includes('response.completed')) { res.destroy(); resolve(); } });
+      res.on('error', reject);
+    });
+    req.on('error', reject); req.end(JSON.stringify(body()));
+  });
+  await eventually(() => upstreamClosed && h.proxy.controller.active.size === 0);
+  const outcome = h.events.find(e => e.event === 'upstream_outcome');
+  assert.equal(outcome.completed, true); assert.equal(outcome.httpStatus, 200);
+  assert.equal(outcome.terminal, 'response.completed'); assert.equal(outcome.inputTokens, 100);
+  assert.equal(h.proxy.controller.sessions.size, 1);
 });
 test('second request for active session receives 409 instead of racing', async t => {
   let release, entered = false;

@@ -88,10 +88,12 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
         if (c.upstream.kind !== 'mock' && !/^Bearer [^\r\n]+$/.test(req.headers.authorization ?? '')) throw new CaeError('upstream_auth_required', 401);
         if (req.headers['content-encoding'] && req.headers['content-encoding'] !== 'identity') throw new CaeError('compressed_requests_unsupported', 415);
         let bytes = models ? Buffer.alloc(0) : await readBody(req, c.maxBodyBytes);
+        let expectsSse = false;
         if (generate) {
           if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) throw new CaeError('json_required', 415);
           const body = parseJson(bytes);
           if (!isObject(body) || typeof body.model !== 'string') throw new CaeError('invalid_responses_request');
+          expectsSse = body.stream === true;
           // prompt_cache_key is NOT a session identity. Without an explicit native
           // session header or local adapter header, there is no cross-call lease.
           const sid = req.headers['x-cae-session'] ?? req.headers.session_id;
@@ -104,7 +106,7 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
         }
         checkAbort(aborter.signal);
         outcome = await relay(new URL(upstreamBase(c) + path + url.search), req, res, bytes,
-          aborter.signal, c.upstreamTimeoutMs, () => { if (tx) controller.markSent(tx); });
+          aborter.signal, c.upstreamTimeoutMs, () => { if (tx) controller.markSent(tx); }, expectsSse);
       } finally { --inflight; }
     } catch (error) {
       const safe = error instanceof CaeError ? error : new CaeError('proxy_transport_error', 502);
@@ -134,16 +136,23 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
     },
   };
 }
-async function relay(url, incoming, outgoing, bytes, signal, timeoutMs, onSent) {
+async function relay(url, incoming, outgoing, bytes, signal, timeoutMs, onSent, expectsSse = false) {
   return new Promise((resolve, reject) => {
-    let settled = false;
+    let settled = false, observer, httpStatus;
     const headers = forwardedHeaders(incoming.headers);
     if (incoming.method === 'POST') { headers['content-length'] = bytes.length; headers['content-type'] = 'application/json'; }
     const client = (url.protocol === 'https:' ? https : http).request(url, { method: incoming.method, headers });
     const abort = () => client.destroy(new CaeError('cancelled', 499));
     const timer = setTimeout(() => client.destroy(new CaeError('upstream_timeout', 504)), timeoutMs);
     function finish(err, value) {
-      if (settled) return; settled = true; clearTimeout(timer); signal.removeEventListener('abort', abort);
+      if (settled) return;
+      // Native clients may close immediately after response.completed, before
+      // HTTP EOF. A validated terminal is authoritative; mid-stream cancellation is not.
+      if (err && observer && httpStatus >= 200 && httpStatus < 300) {
+        const observed = observer.end();
+        if (observed.completed) { err = null; value = { ...observed, httpStatus }; }
+      }
+      settled = true; clearTimeout(timer); signal.removeEventListener('abort', abort);
       if (err) reject(err); else resolve(value);
     }
     signal.addEventListener('abort', abort, { once: true });
@@ -153,7 +162,10 @@ async function relay(url, incoming, outgoing, bytes, signal, timeoutMs, onSent) 
       if (upstream.statusCode >= 300 && upstream.statusCode < 400) {
         upstream.destroy(); finish(new CaeError('upstream_redirect_refused', 502)); return;
       }
-      const observer = new ResponseObserver(upstream.headers['content-type']);
+      // Native streaming responses may omit Content-Type. Use the explicit
+      // request hint only for observation; leave all response bytes/headers intact.
+      httpStatus = upstream.statusCode;
+      observer = new ResponseObserver(upstream.headers['content-type'] ?? (expectsSse ? 'text/event-stream' : undefined));
       outgoing.writeHead(upstream.statusCode, forwardedHeaders(upstream.headers, true));
       const tap = new Transform({ transform(chunk, _encoding, done) { observer.push(chunk); done(null, chunk); } });
       try {
