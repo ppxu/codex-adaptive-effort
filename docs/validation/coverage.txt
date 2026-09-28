@@ -1,0 +1,916 @@
+
+> codex-adaptive-effort@0.1.0-alpha.1 coverage
+> node --experimental-test-coverage --test test/*.test.mjs
+
+TAP version 13
+# Subtest: actual CLI serve/status/control/lock/report/stop pipeline is executable
+ok 1 - actual CLI serve/status/control/lock/report/stop pipeline is executable
+  ---
+  duration_ms: 1256.853271
+  type: 'test'
+  ...
+# Subtest: CLI Jev enable is separately gated before any provider request
+ok 2 - CLI Jev enable is separately gated before any provider request
+  ---
+  duration_ms: 90.421954
+  type: 'test'
+  ...
+# Subtest: default config is shadow, separate baseline evaluator, no auto model
+ok 3 - default config is shadow, separate baseline evaluator, no auto model
+  ---
+  duration_ms: 1.794002
+  type: 'test'
+  ...
+# Subtest: config rejects unknown field
+ok 4 - config rejects unknown field
+  ---
+  duration_ms: 0.357882
+  type: 'test'
+  ...
+# Subtest: config rejects unsupported effort
+ok 5 - config rejects unsupported effort
+  ---
+  duration_ms: 0.456498
+  type: 'test'
+  ...
+# Subtest: config rejects wrong baseline
+ok 6 - config rejects wrong baseline
+  ---
+  duration_ms: 0.137548
+  type: 'test'
+  ...
+# Subtest: config rejects huge port
+ok 7 - config rejects huge port
+  ---
+  duration_ms: 0.116647
+  type: 'test'
+  ...
+# Subtest: config rejects redirect upstream
+ok 8 - config rejects redirect upstream
+  ---
+  duration_ms: 0.172564
+  type: 'test'
+  ...
+# Subtest: config rejects non-loopback mock
+ok 9 - config rejects non-loopback mock
+  ---
+  duration_ms: 0.119291
+  type: 'test'
+  ...
+# Subtest: config rejects unbounded lease
+ok 10 - config rejects unbounded lease
+  ---
+  duration_ms: 0.106065
+  type: 'test'
+  ...
+# Subtest: config rejects negative budget
+ok 11 - config rejects negative budget
+  ---
+  duration_ms: 0.164522
+  type: 'test'
+  ...
+# Subtest: config paths resolve relative to config, not arbitrary CWD
+ok 12 - config paths resolve relative to config, not arbitrary CWD
+  ---
+  duration_ms: 2.184683
+  type: 'test'
+  ...
+# Subtest: token permission and shape validation
+ok 13 - token permission and shape validation
+  ---
+  duration_ms: 1.331084
+  type: 'test'
+  ...
+# Subtest: world-readable token refused on POSIX
+ok 14 - world-readable token refused on POSIX
+  ---
+  duration_ms: 1.81499
+  type: 'test'
+  ...
+# Subtest: token symlinks refused on POSIX
+ok 15 - token symlinks refused on POSIX
+  ---
+  duration_ms: 0.987512
+  type: 'test'
+  ...
+# Subtest: model discovery handles malformed metadata without throwing
+ok 16 - model discovery handles malformed metadata without throwing
+  ---
+  duration_ms: 0.345788
+  type: 'test'
+  ...
+# Subtest: fake app-server probe observes supported efforts with no generation
+ok 17 - fake app-server probe observes supported efforts with no generation
+  ---
+  duration_ms: 65.94499
+  type: 'test'
+  ...
+# Subtest: fake app-server pagination completes
+ok 18 - fake app-server pagination completes
+  ---
+  duration_ms: 80.720877
+  type: 'test'
+  ...
+# Subtest: unsupported model metadata counted, not silently fabricated
+ok 19 - unsupported model metadata counted, not silently fabricated
+  ---
+  duration_ms: 54.548641
+  type: 'test'
+  ...
+# Subtest: probe safely stops: invalid
+ok 20 - probe safely stops: invalid
+  ---
+  duration_ms: 46.736548
+  type: 'test'
+  ...
+# Subtest: probe safely stops: rpc-error
+ok 21 - probe safely stops: rpc-error
+  ---
+  duration_ms: 44.78798
+  type: 'test'
+  ...
+# Subtest: probe safely stops: loop
+ok 22 - probe safely stops: loop
+  ---
+  duration_ms: 51.569046
+  type: 'test'
+  ...
+# Subtest: probe safely stops: silent
+ok 23 - probe safely stops: silent
+  ---
+  duration_ms: 105.993548
+  type: 'test'
+  ...
+# Subtest: missing native binary is reported without consulting credentials
+ok 24 - missing native binary is reported without consulting credentials
+  ---
+  duration_ms: 6.040743
+  type: 'test'
+  ...
+# Subtest: launcher enforces explicit billing path and disables retry/websocket
+ok 25 - launcher enforces explicit billing path and disables retry/websocket
+  ---
+  duration_ms: 0.610088
+  type: 'test'
+  ...
+# Subtest: API launch only selected explicitly and does not contain a secret
+ok 26 - API launch only selected explicitly and does not contain a secret
+  ---
+  duration_ms: 0.172269
+  type: 'test'
+  ...
+# Subtest: CLI init creates isolated config and refuses overwriting
+ok 27 - CLI init creates isolated config and refuses overwriting
+  ---
+  duration_ms: 221.901592
+  type: 'test'
+  ...
+# Subtest: CLI requires auth rather than silently choosing API spending
+ok 28 - CLI requires auth rather than silently choosing API spending
+  ---
+  duration_ms: 140.761499
+  type: 'test'
+  ...
+# Subtest: bounded state keeps Chinese follow-up context, not just latest short reply
+ok 29 - bounded state keeps Chinese follow-up context, not just latest short reply
+  ---
+  duration_ms: 9.482513
+  type: 'test'
+  ...
+# Subtest: bounded evaluator never receives system instructions or encrypted reasoning
+ok 30 - bounded evaluator never receives system instructions or encrypted reasoning
+  ---
+  duration_ms: 0.591666
+  type: 'test'
+  ...
+# Subtest: large evidence stays bounded in characters and records omissions
+ok 31 - large evidence stays bounded in characters and records omissions
+  ---
+  duration_ms: 36.395613
+  type: 'test'
+  ...
+# Subtest: explicit errors invalidate leases; text saying error is not a synthetic failure
+ok 32 - explicit errors invalidate leases; text saying error is not a synthetic failure
+  ---
+  duration_ms: 1.136452
+  type: 'test'
+  ...
+# Subtest: only strict full-history extension can reuse a decision
+ok 33 - only strict full-history extension can reuse a decision
+  ---
+  duration_ms: 2.517306
+  type: 'test'
+  ...
+# Subtest: well-known secret patterns redacted without mutating executor history
+ok 34 - well-known secret patterns redacted without mutating executor history
+  ---
+  duration_ms: 0.405276
+  type: 'test'
+  ...
+# Subtest: image evidence bypasses rather than pretending text is complete
+ok 35 - image evidence bypasses rather than pretending text is complete
+  ---
+  duration_ms: 0.571125
+  type: 'test'
+  ...
+# Subtest: unsupported context is explicitly bypassed: {"background":true}
+ok 36 - unsupported context is explicitly bypassed: {"background":true}
+  ---
+  duration_ms: 1.926475
+  type: 'test'
+  ...
+# Subtest: unsupported context is explicitly bypassed: {"truncation":"auto"}
+ok 37 - unsupported context is explicitly bypassed: {"truncation":"auto"}
+  ---
+  duration_ms: 2.052774
+  type: 'test'
+  ...
+# Subtest: unsupported context is explicitly bypassed: {"conversation":"synthetic"}
+ok 38 - unsupported context is explicitly bypassed: {"conversation":"synthetic"}
+  ---
+  duration_ms: 0.256955
+  type: 'test'
+  ...
+# Subtest: unsupported context is explicitly bypassed: {"context_management":[{"type":"compaction","compact_threshold":1000}]}
+ok 39 - unsupported context is explicitly bypassed: {"context_management":[{"type":"compaction","compact_threshold":1000}]}
+  ---
+  duration_ms: 0.175571
+  type: 'test'
+  ...
+# Subtest: unsupported context is explicitly bypassed: {"input":[]}
+ok 40 - unsupported context is explicitly bypassed: {"input":[]}
+  ---
+  duration_ms: 0.128371
+  type: 'test'
+  ...
+# Subtest: auto modifies only reasoning.effort and does not mutate input
+ok 41 - auto modifies only reasoning.effort and does not mutate input
+  ---
+  duration_ms: 9.632643
+  type: 'test'
+  ...
+# Subtest: shadow evaluates but forwards original object
+ok 42 - shadow evaluates but forwards original object
+  ---
+  duration_ms: 0.83664
+  type: 'test'
+  ...
+# Subtest: off never evaluates
+ok 43 - off never evaluates
+  ---
+  duration_ms: 0.365337
+  type: 'test'
+  ...
+# Subtest: model change passes through without forcing pinned model
+ok 44 - model change passes through without forcing pinned model
+  ---
+  duration_ms: 0.324313
+  type: 'test'
+  ...
+# Subtest: unknown incoming effort bypasses
+ok 45 - unknown incoming effort bypasses
+  ---
+  duration_ms: 0.270154
+  type: 'test'
+  ...
+# Subtest: lease counts completed generations, including first
+ok 46 - lease counts completed generations, including first
+  ---
+  duration_ms: 2.433481
+  type: 'test'
+  ...
+# Subtest: parallel tool results do not consume multiple generations
+ok 47 - parallel tool results do not consume multiple generations
+  ---
+  duration_ms: 0.874906
+  type: 'test'
+  ...
+# Subtest: missing identity forbids cross-call lease
+ok 48 - missing identity forbids cross-call lease
+  ---
+  duration_ms: 1.391056
+  type: 'test'
+  ...
+# Subtest: same session cannot have two simultaneous owners
+ok 49 - same session cannot have two simultaneous owners
+  ---
+  duration_ms: 1.409985
+  type: 'test'
+  ...
+# Subtest: different sessions have isolated leases
+ok 50 - different sessions have isolated leases
+  ---
+  duration_ms: 2.173245
+  type: 'test'
+  ...
+# Subtest: new user input invalidates prior lease
+ok 51 - new user input invalidates prior lease
+  ---
+  duration_ms: 0.989991
+  type: 'test'
+  ...
+# Subtest: history edit invalidates prior lease
+ok 52 - history edit invalidates prior lease
+  ---
+  duration_ms: 0.699106
+  type: 'test'
+  ...
+# Subtest: instructions change invalidates prior lease
+ok 53 - instructions change invalidates prior lease
+  ---
+  duration_ms: 0.736315
+  type: 'test'
+  ...
+# Subtest: tool definition change invalidates prior lease
+ok 54 - tool definition change invalidates prior lease
+  ---
+  duration_ms: 0.756308
+  type: 'test'
+  ...
+# Subtest: explicit effort change invalidates prior lease
+ok 55 - explicit effort change invalidates prior lease
+  ---
+  duration_ms: 0.724245
+  type: 'test'
+  ...
+# Subtest: new structured tool failure invalidates prior lease
+ok 56 - new structured tool failure invalidates prior lease
+  ---
+  duration_ms: 0.761037
+  type: 'test'
+  ...
+# Subtest: old tool failure alone does not force permanent reevaluation
+ok 57 - old tool failure alone does not force permanent reevaluation
+  ---
+  duration_ms: 0.939126
+  type: 'test'
+  ...
+# Subtest: history rewind / duplicate payload cannot reuse a lease
+ok 58 - history rewind / duplicate payload cannot reuse a lease
+  ---
+  duration_ms: 0.726341
+  type: 'test'
+  ...
+# Subtest: lease expires from decision time, not last use
+ok 59 - lease expires from decision time, not last use
+  ---
+  duration_ms: 0.87185
+  type: 'test'
+  ...
+# Subtest: failed upstream does not commit lease
+ok 60 - failed upstream does not commit lease
+  ---
+  duration_ms: 0.811874
+  type: 'test'
+  ...
+# Subtest: prepared-but-not-sent transaction cannot commit lease
+ok 61 - prepared-but-not-sent transaction cannot commit lease
+  ---
+  duration_ms: 1.111664
+  type: 'test'
+  ...
+# Subtest: manual lock suppresses judge and overrides effort in auto
+ok 62 - manual lock suppresses judge and overrides effort in auto
+  ---
+  duration_ms: 0.740354
+  type: 'test'
+  ...
+# Subtest: invalid controls fail atomically
+ok 63 - invalid controls fail atomically
+  ---
+  duration_ms: 0.718507
+  type: 'test'
+  ...
+# Subtest: control change after proposal prevents stale send
+ok 64 - control change after proposal prevents stale send
+  ---
+  duration_ms: 0.720421
+  type: 'test'
+  ...
+# Subtest: control revision changed during judge causes bypass
+ok 65 - control revision changed during judge causes bypass
+  ---
+  duration_ms: 0.873143
+  type: 'test'
+  ...
+# Subtest: cancelled judge never applies late result
+ok 66 - cancelled judge never applies late result
+  ---
+  duration_ms: 1.296189
+  type: 'test'
+  ...
+# Subtest: timeout preserves explicit incoming effort
+ok 67 - timeout preserves explicit incoming effort
+  ---
+  duration_ms: 51.323579
+  type: 'test'
+  ...
+# Subtest: invalid judge result safely falls back: {"effort":"unsupported","lease":1}
+ok 68 - invalid judge result safely falls back: {"effort":"unsupported","lease":1}
+  ---
+  duration_ms: 0.693313
+  type: 'test'
+  ...
+# Subtest: invalid judge result safely falls back: {"effort":"low","lease":100}
+ok 69 - invalid judge result safely falls back: {"effort":"low","lease":100}
+  ---
+  duration_ms: 0.419729
+  type: 'test'
+  ...
+# Subtest: invalid judge result safely falls back: {"effort":"low","lease":true}
+ok 70 - invalid judge result safely falls back: {"effort":"low","lease":true}
+  ---
+  duration_ms: 0.331437
+  type: 'test'
+  ...
+# Subtest: invalid judge result safely falls back: null
+ok 71 - invalid judge result safely falls back: null
+  ---
+  duration_ms: 0.386741
+  type: 'test'
+  ...
+# Subtest: call budget prevents additional judge requests without downgrading
+ok 72 - call budget prevents additional judge requests without downgrading
+  ---
+  duration_ms: 0.77499
+  type: 'test'
+  ...
+# Subtest: three judge failures open circuit; recovery retries after cooldown
+ok 73 - three judge failures open circuit; recovery retries after cooldown
+  ---
+  duration_ms: 1.457775
+  type: 'test'
+  ...
+# Subtest: completed shadow decisions can reuse a shadow lease without rewriting
+ok 74 - completed shadow decisions can reuse a shadow lease without rewriting
+  ---
+  duration_ms: 0.724985
+  type: 'test'
+  ...
+# Subtest: typed contract offers only supported efforts, not model routing
+ok 75 - typed contract offers only supported efforts, not model routing
+  ---
+  duration_ms: 2.888344
+  type: 'test'
+  ...
+# Subtest: valid response parses typed choices and reports conservative diagnostic confidence
+ok 76 - valid response parses typed choices and reports conservative diagnostic confidence
+  ---
+  duration_ms: 0.421966
+  type: 'test'
+  ...
+# Subtest: rejects unsupported effort
+ok 77 - rejects unsupported effort
+  ---
+  duration_ms: 0.295772
+  type: 'test'
+  ...
+# Subtest: rejects unbounded lease
+ok 78 - rejects unbounded lease
+  ---
+  duration_ms: 0.104758
+  type: 'test'
+  ...
+# Subtest: rejects numeric not string choice
+ok 79 - rejects numeric not string choice
+  ---
+  duration_ms: 0.089855
+  type: 'test'
+  ...
+# Subtest: rejects missing question
+ok 80 - rejects missing question
+  ---
+  duration_ms: 0.077801
+  type: 'test'
+  ...
+# Subtest: rejects incomplete distribution
+ok 81 - rejects incomplete distribution
+  ---
+  duration_ms: 0.091363
+  type: 'test'
+  ...
+# Subtest: rejects invalid sum
+ok 82 - rejects invalid sum
+  ---
+  duration_ms: 0.175909
+  type: 'test'
+  ...
+# Subtest: rejects contradictory winner
+ok 83 - rejects contradictory winner
+  ---
+  duration_ms: 0.149983
+  type: 'test'
+  ...
+# Subtest: invalid confidence is unknown, not a success rate
+ok 84 - invalid confidence is unknown, not a success rate
+  ---
+  duration_ms: 0.125629
+  type: 'test'
+  ...
+# Subtest: TypeSafe request uses dedicated key and bounded state through fixed endpoint
+ok 85 - TypeSafe request uses dedicated key and bounded state through fixed endpoint
+  ---
+  duration_ms: 22.285084
+  type: 'test'
+  ...
+# Subtest: Jev HTTP 401 has no retry or body echo
+ok 86 - Jev HTTP 401 has no retry or body echo
+  ---
+  duration_ms: 0.869255
+  type: 'test'
+  ...
+# Subtest: Jev HTTP 402 has no retry or body echo
+ok 87 - Jev HTTP 402 has no retry or body echo
+  ---
+  duration_ms: 0.352181
+  type: 'test'
+  ...
+# Subtest: Jev HTTP 429 has no retry or body echo
+ok 88 - Jev HTTP 429 has no retry or body echo
+  ---
+  duration_ms: 0.193767
+  type: 'test'
+  ...
+# Subtest: Jev HTTP 500 has no retry or body echo
+ok 89 - Jev HTTP 500 has no retry or body echo
+  ---
+  duration_ms: 0.153456
+  type: 'test'
+  ...
+# Subtest: oversized evaluator response rejected
+ok 90 - oversized evaluator response rejected
+  ---
+  duration_ms: 0.51008
+  type: 'test'
+  ...
+# Subtest: invalid evaluator JSON rejected
+ok 91 - invalid evaluator JSON rejected
+  ---
+  duration_ms: 0.364748
+  type: 'test'
+  ...
+# Subtest: cancelled evaluation never contacts provider
+ok 92 - cancelled evaluation never contacts provider
+  ---
+  duration_ms: 0.183664
+  type: 'test'
+  ...
+# Subtest: baseline judge is explicitly not adaptive
+ok 93 - baseline judge is explicitly not adaptive
+  ---
+  duration_ms: 0.201999
+  type: 'test'
+  ...
+# Subtest: missing separate Jev key refuses live evaluator construction
+ok 94 - missing separate Jev key refuses live evaluator construction
+  ---
+  duration_ms: 0.151062
+  type: 'test'
+  ...
+# Subtest: real loopback auto request changes effort only; SSE bytes are identical
+ok 95 - real loopback auto request changes effort only; SSE bytes are identical
+  ---
+  duration_ms: 89.052712
+  type: 'test'
+  ...
+# Subtest: shadow preserves original JSON bytes, whitespace and Unicode
+ok 96 - shadow preserves original JSON bytes, whitespace and Unicode
+  ---
+  duration_ms: 15.441933
+  type: 'test'
+  ...
+# Subtest: off preserves original bytes and does not call judge
+ok 97 - off preserves original bytes and does not call judge
+  ---
+  duration_ms: 18.271425
+  type: 'test'
+  ...
+# Subtest: local token and cookies never reach upstream; auth stays on upstream path only
+ok 98 - local token and cookies never reach upstream; auth stays on upstream path only
+  ---
+  duration_ms: 14.079564
+  type: 'test'
+  ...
+# Subtest: missing local token is rejected without upstream or judge call
+ok 99 - missing local token is rejected without upstream or judge call
+  ---
+  duration_ms: 6.806428
+  type: 'test'
+  ...
+# Subtest: browser requests refused: origin
+ok 100 - browser requests refused: origin
+  ---
+  duration_ms: 5.257905
+  type: 'test'
+  ...
+# Subtest: browser requests refused: sec-fetch-site
+ok 101 - browser requests refused: sec-fetch-site
+  ---
+  duration_ms: 5.047589
+  type: 'test'
+  ...
+# Subtest: DNS rebinding host is refused even with a token
+ok 102 - DNS rebinding host is refused even with a token
+  ---
+  duration_ms: 4.493857
+  type: 'test'
+  ...
+# Subtest: health is authenticated and reveals no credential
+ok 103 - health is authenticated and reveals no credential
+  ---
+  duration_ms: 5.296381
+  type: 'test'
+  ...
+# Subtest: request-size cap rejects before upstream work
+ok 104 - request-size cap rejects before upstream work
+  ---
+  duration_ms: 5.444766
+  type: 'test'
+  ...
+# Subtest: malformed JSON returns a safe error without echoing payload
+ok 105 - malformed JSON returns a safe error without echoing payload
+  ---
+  duration_ms: 5.720078
+  type: 'test'
+  ...
+# Subtest: unknown routes cannot act as an arbitrary HTTP proxy
+ok 106 - unknown routes cannot act as an arbitrary HTTP proxy
+  ---
+  duration_ms: 5.300512
+  type: 'test'
+  ...
+# Subtest: compressed request rejected rather than misparsed
+ok 107 - compressed request rejected rather than misparsed
+  ---
+  duration_ms: 7.313649
+  type: 'test'
+  ...
+# Subtest: bypass retains complete request: a model selected outside the pin
+ok 108 - bypass retains complete request: a model selected outside the pin
+  ---
+  duration_ms: 9.616101
+  type: 'test'
+  ...
+# Subtest: bypass retains complete request: existing configuration update
+ok 109 - bypass retains complete request: existing configuration update
+  ---
+  duration_ms: 10.432874
+  type: 'test'
+  ...
+# Subtest: bypass retains complete request: delta continuation
+ok 110 - bypass retains complete request: delta continuation
+  ---
+  duration_ms: 10.596676
+  type: 'test'
+  ...
+# Subtest: bypass retains complete request: compaction item
+ok 111 - bypass retains complete request: compaction item
+  ---
+  duration_ms: 9.640255
+  type: 'test'
+  ...
+# Subtest: bypass retains complete request: image-dependent evidence
+ok 112 - bypass retains complete request: image-dependent evidence
+  ---
+  duration_ms: 12.566734
+  type: 'test'
+  ...
+# Subtest: standalone compact route is byte-preserving and does not call judge
+ok 113 - standalone compact route is byte-preserving and does not call judge
+  ---
+  duration_ms: 9.567815
+  type: 'test'
+  ...
+# Subtest: models route forwards only to configured backend
+ok 114 - models route forwards only to configured backend
+  ---
+  duration_ms: 9.188962
+  type: 'test'
+  ...
+# Subtest: upstream HTTP error returned without retries
+ok 115 - upstream HTTP error returned without retries
+  ---
+  duration_ms: 8.031901
+  type: 'test'
+  ...
+# Subtest: redirect refused instead of forwarding credentials to a new destination
+ok 116 - redirect refused instead of forwarding credentials to a new destination
+  ---
+  duration_ms: 9.579196
+  type: 'test'
+  ...
+# Subtest: non-stream JSON responses preserve bytes and observe usage
+ok 117 - non-stream JSON responses preserve bytes and observe usage
+  ---
+  duration_ms: 9.802935
+  type: 'test'
+  ...
+# Subtest: missing terminal event does not establish completion or a lease
+ok 118 - missing terminal event does not establish completion or a lease
+  ---
+  duration_ms: 10.582078
+  type: 'test'
+  ...
+# Subtest: stream interruption never triggers transparent replay
+ok 119 - stream interruption never triggers transparent replay
+  ---
+  duration_ms: 34.686767
+  type: 'test'
+  ...
+# Subtest: cancel during judge prevents any upstream request
+ok 120 - cancel during judge prevents any upstream request
+  ---
+  duration_ms: 29.796778
+  type: 'test'
+  ...
+# Subtest: cancel during upstream stream closes upstream and clears lease
+ok 121 - cancel during upstream stream closes upstream and clears lease
+  ---
+  duration_ms: 11.225794
+  type: 'test'
+  ...
+# Subtest: second request for active session receives 409 instead of racing
+ok 122 - second request for active session receives 409 instead of racing
+  ---
+  duration_ms: 15.836794
+  type: 'test'
+  ...
+# Subtest: authenticated manual control changes next request without a judge call
+ok 123 - authenticated manual control changes next request without a judge call
+  ---
+  duration_ms: 13.461263
+  type: 'test'
+  ...
+# Subtest: real HTTP continuation reuses a completed lease
+ok 124 - real HTTP continuation reuses a completed lease
+  ---
+  duration_ms: 14.940357
+  type: 'test'
+  ...
+# Subtest: explicit WebSocket upgrade gets 426, not a fabricated compatible response
+ok 125 - explicit WebSocket upgrade gets 426, not a fabricated compatible response
+  ---
+  duration_ms: 6.103719
+  type: 'test'
+  ...
+# Subtest: external upstream cannot start without explicit enable flag
+ok 126 - external upstream cannot start without explicit enable flag
+  ---
+  duration_ms: 2.83478
+  type: 'test'
+  ...
+# Subtest: hop-by-hop nominated header is not forwarded
+ok 127 - hop-by-hop nominated header is not forwarded
+  ---
+  duration_ms: 2.665904
+  type: 'test'
+  ...
+# Subtest: publication excludes runtime config, keys and dotenv without reading them
+ok 128 - publication excludes runtime config, keys and dotenv without reading them
+  ---
+  duration_ms: 24.74484
+  type: 'test'
+  ...
+# Subtest: publication refuses suspicious real-shaped tokens in source
+ok 129 - publication refuses suspicious real-shaped tokens in source
+  ---
+  duration_ms: 1.734576
+  type: 'test'
+  ...
+# Subtest: publication refuses unexpected binary file in public root
+ok 130 - publication refuses unexpected binary file in public root
+  ---
+  duration_ms: 1.601839
+  type: 'test'
+  ...
+# Subtest: publication refuses nested private runtime directory
+ok 131 - publication refuses nested private runtime directory
+  ---
+  duration_ms: 1.009602
+  type: 'test'
+  ...
+# Subtest: publication refuses symlinks in public roots
+ok 132 - publication refuses symlinks in public roots
+  ---
+  duration_ms: 0.814216
+  type: 'test'
+  ...
+# Subtest: publication refuses auth or local captures even under source roots
+ok 133 - publication refuses auth or local captures even under source roots
+  ---
+  duration_ms: 1.137797
+  type: 'test'
+  ...
+# Subtest: UTF8 SSE fragmented byte-by-byte yields exact terminal usage
+ok 134 - UTF8 SSE fragmented byte-by-byte yields exact terminal usage
+  ---
+  duration_ms: 4.346691
+  type: 'test'
+  ...
+# Subtest: mismatched response id is not accepted as completed
+ok 135 - mismatched response id is not accepted as completed
+  ---
+  duration_ms: 0.260346
+  type: 'test'
+  ...
+# Subtest: DONE or text alone cannot establish successful completion
+ok 136 - DONE or text alone cannot establish successful completion
+  ---
+  duration_ms: 0.132014
+  type: 'test'
+  ...
+# Subtest: large intermediate events do not stop observing later small terminal
+ok 137 - large intermediate events do not stop observing later small terminal
+  ---
+  duration_ms: 0.307145
+  type: 'test'
+  ...
+# Subtest: incomplete response may report usage but cannot commit a lease
+ok 138 - incomplete response may report usage but cannot commit a lease
+  ---
+  duration_ms: 0.260931
+  type: 'test'
+  ...
+# Subtest: missing or invalid counters are null, not zero
+ok 139 - missing or invalid counters are null, not zero
+  ---
+  duration_ms: 0.121516
+  type: 'test'
+  ...
+# Subtest: usage report excludes unknown counters from sums and does not claim savings
+ok 140 - usage report excludes unknown counters from sums and does not claim savings
+  ---
+  duration_ms: 0.498303
+  type: 'test'
+  ...
+# Subtest: audit writes allowlisted metadata only, with restrictive file mode
+ok 141 - audit writes allowlisted metadata only, with restrictive file mode
+  ---
+  duration_ms: 2.588663
+  type: 'test'
+  ...
+# Subtest: logging failure does not throw into model stream
+ok 142 - logging failure does not throw into model stream
+  ---
+  duration_ms: 1.001781
+  type: 'test'
+  ...
+# Subtest: audit refuses symlink on POSIX
+ok 143 - audit refuses symlink on POSIX
+  ---
+  duration_ms: 1.0039
+  type: 'test'
+  ...
+# Subtest: malformed completion without response identity/status is not trusted
+ok 144 - malformed completion without response identity/status is not trusted
+  ---
+  duration_ms: 0.325285
+  type: 'test'
+  ...
+# Subtest: evaluator calls include failed attempts with unknown usage
+ok 145 - evaluator calls include failed attempts with unknown usage
+  ---
+  duration_ms: 0.211746
+  type: 'test'
+  ...
+1..145
+# tests 145
+# suites 0
+# pass 145
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1510.770738
+# start of coverage report
+# -----------------------------------------------------------------------
+# file                   | line % | branch % | funcs % | uncovered lines
+# -----------------------------------------------------------------------
+# bin                    |        |          |         | 
+#  cae.mjs               |  84.43 |    42.86 |   70.00 | 61-66 104-116
+# scripts                |        |          |         | 
+#  publication.mjs       | 100.00 |    96.43 |  100.00 | 
+# src                    |        |          |         | 
+#  audit.mjs             | 100.00 |    93.62 |   94.74 | 
+#  codex.mjs             | 100.00 |    84.13 |   89.47 | 
+#  config.mjs            | 100.00 |    81.82 |  100.00 | 
+#  context.mjs           |  96.00 |    87.50 |   90.48 | 14-16
+#  controller.mjs        | 100.00 |    93.69 |  100.00 | 
+#  judge.mjs             | 100.00 |    95.65 |  100.00 | 
+#  proxy.mjs             |  98.83 |    85.48 |   80.65 | 81-82
+#  stream.mjs            | 100.00 |    91.43 |  100.00 | 
+#  util.mjs              | 100.00 |    94.59 |  100.00 | 
+# test                   |        |          |         | 
+#  cli.test.mjs          | 100.00 |    92.86 |   91.67 | 
+#  config-codex.test.mjs | 100.00 |   100.00 |  100.00 | 
+#  context.test.mjs      | 100.00 |   100.00 |  100.00 | 
+#  controller.test.mjs   | 100.00 |   100.00 |  100.00 | 
+#  helpers.mjs           | 100.00 |    93.75 |  100.00 | 
+#  judge.test.mjs        | 100.00 |   100.00 |   96.55 | 
+#  proxy.test.mjs        | 100.00 |   100.00 |  100.00 | 
+#  publication.test.mjs  | 100.00 |   100.00 |  100.00 | 
+#  stream-audit.test.mjs | 100.00 |   100.00 |  100.00 | 
+# -----------------------------------------------------------------------
+# all files              |  98.54 |    91.25 |   95.88 | 
+# -----------------------------------------------------------------------
+# end of coverage report

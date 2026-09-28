@@ -1,0 +1,15 @@
+node_modules/
+.cae/
+.env
+.env.*
+!.env.example
+*.log
+*.jsonl
+coverage/
+.DS_Store
+*.key
+*.pem
+*.zip
+*.local.json
+*.local.md
+*.local.txt

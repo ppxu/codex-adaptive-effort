@@ -1,0 +1,71 @@
+{
+  "demo": "PASS",
+  "realProvidersCalled": 0,
+  "realQuotaUsed": 0,
+  "scenarios": [
+    {
+      "mode": "shadow",
+      "upstreamEffort": "high"
+    },
+    {
+      "mode": "auto",
+      "upstreamEffort": "low"
+    },
+    {
+      "mode": "auto",
+      "decision": "reused compatible lease"
+    },
+    {
+      "mode": "manual",
+      "upstreamEffort": "medium"
+    },
+    {
+      "mode": "off",
+      "upstreamEffort": "high"
+    }
+  ],
+  "syntheticUsageReport": {
+    "decisions": 4,
+    "requests": 5,
+    "completed": 5,
+    "changedRequests": 3,
+    "sources": {
+      "judge": 2,
+      "lease": 1,
+      "manual": 1
+    },
+    "tokenObservations": {
+      "inputTokens": {
+        "observedSum": 500,
+        "knownRequests": 5,
+        "unknownRequests": 0
+      },
+      "cachedInputTokens": {
+        "observedSum": 200,
+        "knownRequests": 5,
+        "unknownRequests": 0
+      },
+      "outputTokens": {
+        "observedSum": 100,
+        "knownRequests": 5,
+        "unknownRequests": 0
+      },
+      "reasoningTokens": {
+        "observedSum": 40,
+        "knownRequests": 5,
+        "unknownRequests": 0
+      }
+    },
+    "measuredSavings": null,
+    "note": "Observed usage only. Reasoning tokens are a subset of output tokens; do not add them again. Missing is not zero. Shadow traffic still uses the original effort. No counterfactual or quality equivalence is established.",
+    "evaluator": {
+      "attempts": 2,
+      "externalAttempts": 0,
+      "observedInputTokens": null,
+      "unknownInputUsage": 2,
+      "observedDurationMs": 1,
+      "note": "Cancelled/timed-out evaluator calls may be billable even when usage is unknown. No dollar estimate."
+    }
+  },
+  "note": "This proves local wiring only; no model quality or savings measured."
+}
