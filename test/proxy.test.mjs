@@ -6,6 +6,18 @@ import { harness, body, append, fakeJudge, completedSse, eventually, sleep, conf
 import { startProxy, forwardedHeaders } from '../src/proxy.mjs';
 
 async function consume(res) { return Buffer.from(await res.arrayBuffer()); }
+test('shadow-only HTTP proxy preserves request and SSE bytes after rejecting an auto control', async t => {
+  const h = await harness(t, { cfg: { mode: 'shadow' }, shadowOnly: true });
+  const rejected = await fetch(h.base + '/control', { method: 'POST', headers: h.headers, body: JSON.stringify({ mode: 'auto' }) });
+  assert.equal(rejected.status, 400); assert.equal((await rejected.json()).error.code, 'shadow_only_control');
+  const bytes = '  ' + JSON.stringify(body(), null, 2) + '\n';
+  const response = await h.request(bytes);
+  assert.deepEqual(await consume(response), completedSse());
+  assert.equal(h.records[0].bytes.toString(), bytes);
+  assert.equal(h.judge.calls, 1);
+  assert.equal(h.events.find(e => e.event === 'decision').proposedEffort, 'low');
+  assert(h.events.filter(e => e.event === 'request_sent').every(e => !e.changed));
+});
 test('real loopback auto request changes effort only; SSE bytes are identical', async t => {
   const h = await harness(t); const b = body(); const res = await h.request(b);
   assert.equal(res.status, 200); assert.deepEqual(await consume(res), completedSse());

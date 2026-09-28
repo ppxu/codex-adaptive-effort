@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { defaultConfig, validateConfig, loadConfig, readLocalToken } from '../src/config.mjs';
-import { normalizeModel, probeModels, codexArgs, doctor } from '../src/codex.mjs';
+import { normalizeModel, probeModels, codexArgs, doctor, nativeEnvironment } from '../src/codex.mjs';
 import { spawnSync } from 'node:child_process';
 const c = () => defaultConfig('synthetic-model', ['low', 'medium', 'high'], 'high');
 const fixture = fileURLToPath(new URL('./fixtures/fake-codex.mjs', import.meta.url));
@@ -43,6 +43,19 @@ test('model discovery handles malformed metadata without throwing', () => {
 test('fake app-server probe observes supported efforts with no generation', async () => {
   const result = await probeModels(process.execPath, { args: [fixture] });
   assert.deepEqual(result.models[0].supportedEfforts, ['low', 'high']); assert.equal(result.paidGenerations, 0);
+});
+test('native environment strips evaluator key without changing native route or caller environment', () => {
+  const source = { TYPESAFE_API_KEY: 'synthetic-jev', PATH: 'synthetic-path', OPENAI_API_KEY: 'synthetic-native' };
+  assert.deepEqual(nativeEnvironment(source), { PATH: source.PATH, OPENAI_API_KEY: source.OPENAI_API_KEY });
+  assert.equal(source.TYPESAFE_API_KEY, 'synthetic-jev');
+});
+test('model probe does not transmit evaluator key to actual native child process', () => {
+  const code = `import {probeModels} from './src/codex.mjs';
+    await probeModels(process.execPath, {args:[process.argv[1], 'reject-jev-key']});`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', code, fixture], {
+    encoding: 'utf8', timeout: 5000, env: { ...process.env, TYPESAFE_API_KEY: 'synthetic-only-key' },
+  });
+  assert.equal(result.status, 0); assert.equal(result.stdout, ''); assert.equal(result.stderr, '');
 });
 test('fake app-server pagination completes', async () => {
   const result = await probeModels(process.execPath, { args: [fixture, 'pages'] }); assert.equal(result.models.length, 2);

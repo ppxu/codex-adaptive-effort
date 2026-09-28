@@ -49,7 +49,7 @@ node bin/cae.mjs desktop status
 node bin/cae.mjs desktop stop
 ```
 
-首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
+首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。新增 `--enable-jev` 可显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；该入口离线验证已通过，桌面真实 Jev 传输仍待验收。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
 
 先读 [LOCAL_VALIDATION.md](docs/LOCAL_VALIDATION.md)，按「原版 → off → 手动 auto → Jev shadow → Jev auto」逐级验证。**这不是默认启用的桌面兼容承诺。** 首版提供可撤销的 CLI 路径验证代理；本机独立桌面实例已通过启动、纯文本 off/手动锁档及取消恢复，见 [桌面检查记录](docs/DESKTOP_ACCEPTANCE.md)。
 
@@ -84,7 +84,7 @@ API 使用者须从初始化起明确选择 `--auth api`，再在自己的终端
 
 ## 启用 Jev
 
-建议先执行 [固定合成样例 shadow 验收](docs/JEV_SHADOW_ACCEPTANCE.md)：默认只预览，授权后最多 8 次 Jev 请求，不发起 Codex 生成。它用于验证真实判断器；当前桌面启动器仍只支持 baseline，下面的服务配置步骤不适用于桌面启动器。
+建议先执行 [固定合成样例 shadow 验收](docs/JEV_SHADOW_ACCEPTANCE.md)：默认只预览，授权后最多 8 次 Jev 请求，不发起 Codex 生成。它用于验证真实判断器；桌面请使用 [Jev shadow 开关](docs/DESKTOP_LAUNCHER.md)，下面的磁盘配置步骤用于独立 serve 服务。
 
 默认 `judge.kind=baseline` **不是复杂度判断器**，只是接线验收用的固定基准。要接入 Jev：停止服务，在 `.cae/config.json` 将 `judge.kind` 改为 `typesafe`，通过你自己的密钥管理方式设置 `TYPESAFE_API_KEY`，然后显式执行：
 

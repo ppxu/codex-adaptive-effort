@@ -202,6 +202,8 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+后续桌面 Jev shadow 开关已实现，见 [桌面启动器](DESKTOP_LAUNCHER.md)：进程级 opt-in、最多 8 次、强制 off/shadow、原生子进程不继承独立 Jev 密钥。188 项离线测试通过；本次功能开发外部调用 0，桌面真实 Jev 传输仍未验收。
+
 2026-09-28 后续自动判断验证：见 [Jev shadow 验收](JEV_SHADOW_ACCEPTANCE.md)。源码 `6763d15` 的 181 项离线测试与对应 CI 通过；经用户授权使用本地独立环境变量，8 次真实 Jev 判断和 2 个旁路样例通过协议检查，实际响应模型 `jev-1.13.0`，Codex 生成调用 0。合成样例语义观察已记录，缺失上下文的置信度和接近超时门槛的延迟仍需关注。桌面自动判断和日常 auto 可靠性仍未验收；本文较早的 CLI 历史阶段不回填这些后续结果。
 
 原始 verify/回归输出和临时验收驱动保存在被忽略的 `*.local.txt`；doctor、修复前后 capability、预检和真实传输摘要保存在被忽略的 `*.local.json`；隔离 .cae、原生输出和仅记录元数据的诊断在系统临时目录。它们均不属于提交候选。报告不含用户目录、登录账号、令牌或真实任务内容。最终仅保留相关源码、合成测试和本报告的改动，已有 SOURCE_MANIFEST.json 不变。

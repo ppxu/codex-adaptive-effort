@@ -23,12 +23,13 @@ const HELP = `Codex Adaptive Effort 0.1.0-alpha.1 (Node >=22.16; no dependencies
   cae lock high / cae unlock               Explicit instance-wide lock
   cae codex --auth chatgpt|api -- [ARGS]     One-off launch, no config.toml writes
   cae launch-args --auth chatgpt|api         Print non-secret argv for inspection
-  cae desktop start --auth chatgpt --enable-upstream [--model ID]
+  cae desktop start --auth chatgpt --enable-upstream [--model ID] [--enable-jev]
   cae desktop status / desktop stop        Isolated macOS desktop instance
   cae report                              Observed usage, not savings claims
 
 Shared: --config .cae/config.json; init: --dir .cae
-Jev requires config judge.kind=typesafe, TYPESAFE_API_KEY and --enable-jev.
+serve Jev requires config judge.kind=typesafe, TYPESAFE_API_KEY and --enable-jev.
+Desktop --enable-jev is process-only, shadow/off only, at most 8 evaluations.
 An external upstream requires --enable-upstream and normal Codex auth.
 Default is SHADOW with a baseline-only evaluator, not a complexity classifier.
 `;
@@ -62,9 +63,8 @@ async function main() {
     const explicitConfig = input.some(x => x === '--config' || x.startsWith('--config='));
     const configPath = explicitConfig ? v.config : '.cae/desktop/config.json';
     if (p[1] === 'start') {
-      if (v['enable-jev']) throw new CaeError('desktop_jev_not_enabled');
       const desktop = await startDesktop({ configPath, model: v.model, baseline: v.baseline, auth: v.auth,
-        enableUpstream: v['enable-upstream'], appPath: v.app, onState: print });
+        enableUpstream: v['enable-upstream'], enableJev: v['enable-jev'], appPath: v.app, onState: print });
       print(await desktop.done); return;
     }
     if (!['status', 'stop'].includes(p[1])) throw new CaeError('desktop_unknown_action');

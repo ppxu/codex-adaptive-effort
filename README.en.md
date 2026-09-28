@@ -19,7 +19,7 @@ Requires Node >=22.16. No third-party runtime dependencies. Verification uses sy
 
 An independent instance of the installed desktop app also passed off, plain-text low/high locks, cancellation and same-thread recovery after an app-server argument-scope fix. See [desktop acceptance](docs/DESKTOP_ACCEPTANCE.md). This covers its Codex programming surface, not ordinary ChatGPT chats or a packaged desktop plugin.
 
-The experimental macOS arm64 launcher provides `desktop start/status/stop`, fresh capability and effective-provider checks, and owned-process cleanup. It accepts only the documented application/CLI version, defaults to shadow + baseline, and does not enable Jev. Use a new local thread; existing threads retain their providers. See [launcher instructions](docs/DESKTOP_LAUNCHER.md).
+The experimental macOS arm64 launcher provides `desktop start/status/stop`, fresh capability and effective-provider checks, and owned-process cleanup. It accepts only the documented application/CLI version and defaults to shadow + baseline. Explicit `--enable-jev` enables process-only Jev shadow with at most eight evaluations and rejects auto mode and manual locks; this entry point has offline coverage but awaits real desktop Jev transport acceptance. Use a new local thread; existing threads retain their providers. See [launcher instructions](docs/DESKTOP_LAUNCHER.md).
 
 Eight real Jev evaluator-only calls on fixed synthetic cases passed protocol checks, with two additional bypass cases; see the [shadow acceptance record](docs/JEV_SHADOW_ACCEPTANCE.md). No executor generation was performed in that experiment.
 

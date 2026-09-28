@@ -50,11 +50,11 @@ async function readBody(req, limit) {
     req.on('data', data); req.once('end', end); req.once('aborted', abort); req.once('error', error);
   });
 }
-export async function startProxy(config, { token, judge, emit = () => {}, allowUpstream = false, auditHealthy = () => true } = {}) {
+export async function startProxy(config, { token, judge, emit = () => {}, allowUpstream = false, auditHealthy = () => true, shadowOnly = false } = {}) {
   const c = validateConfig(config);
   if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) throw new CaeError('invalid_local_token');
   if (c.upstream.kind !== 'mock' && !allowUpstream) throw new CaeError('upstream_not_enabled');
-  const controller = new Controller(c, judge, { emit });
+  const controller = new Controller(c, judge, { emit, shadowOnly });
   const sessionSalt = randomBytes(32);
   const aborters = new Set(); let port; let inflight = 0;
   const server = http.createServer(async (req, res) => {

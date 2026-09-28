@@ -66,7 +66,65 @@ node bin/cae.mjs control off --config .cae/desktop/config.json
 node bin/cae.mjs unlock --config .cae/desktop/config.json
 ```
 
-实际可选 effort 取决于该模型的最新能力。手动锁档只对合格的主模型请求生效，作用域是整个 CAE 实例；工具历史等不兼容形态继续旁路。baseline 判断器不是复杂度判断器，本轮启动入口拒绝 Jev 配置；不增加第三方调用。
+实际可选 effort 取决于该模型的最新能力。手动锁档只对合格的主模型请求生效，作用域是整个 CAE 实例；工具历史等不兼容形态继续旁路。以上手动 auto 流程用于默认的 baseline 实例；启用下面的 Jev shadow 开关后，实例会拒绝 auto 和非空锁档。
+
+## Jev shadow（显式启用）
+
+此入口已完成离线接线验证，**桌面真实 Jev 传输尚未验收**。独立判断器的 8 个真实合成样例结果见 [Jev 验收记录](JEV_SHADOW_ACCEPTANCE.md)，不能替代桌面链路验收。
+
+下面是后续真实验收的启动命令，本次开发未执行。先正常停止旧实验实例；通过自己的正常方式在启动终端提供 `TYPESAFE_API_KEY`，不要把值放到命令参数中。只在新实例的新本地会话中使用无敏感的合成任务：
+
+```bash
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \
+  --enable-upstream --enable-jev
+```
+
+开关仅对本次进程生效：将运行时判断器设为 typesafe，不写回磁盘配置；初始 mode 仍遵循配置的 shadow/off，auto 配置拒绝启动。未带开关时继续使用 baseline；若操作者已手动将磁盘 judge.kind 改为 typesafe，则没有开关会拒绝启动，不静默启用第三方。
+
+每个启用 Jev 的启动进程最多 8 次判断、单次超时最多 1500 ms；配置已有更小上限时继续使用更小值。达到上限后保持来请求档位，记录 `judge_call_budget`；不重试、不切换服务商。off/shadow 切换不重置计数，重启是新一批调用，不是同一次预算。超时或取消的请求仍可能产生服务端费用；次数不是金额保证。
+
+启动本身不主动提交测试任务。用户发送合格任务时，有限任务文本会发给 TypeSafe，同时原任务会照常使用原生 ChatGPT 模型额度。不要在这个实例中处理未授权的日常任务或敏感代码；窗口和代理没有按任务自动筛选“是否敏感”的能力。独立 Jev 密钥只供 CAE 判断器使用，模型探针、原生 CLI 和桌面子进程均不继承它。
+
+检查状态和报告：
+
+```bash
+node bin/cae.mjs desktop status
+node bin/cae.mjs report --config .cae/desktop/config.json
+```
+
+预期 running 时包含 `judgeKind=typesafe`、`shadowOnly=true`、`lockedEffort=null`、`judgeCallLimit<=8`，首次尚未提交任务时 `judgeCalls=0`。shadow 只建议、不改档；控制接口拒绝 `control auto` 和 `lock`，返回 `shadow_only_control`。允许 `control off` 暂停判断，再 `control shadow` 恢复剩余预算。
+
+`report` 汇总调用和传输；查看具体建议时仅投影 CAE 自己的决策元数据，以下命令不会读取请求正文或登录文件：
+
+```bash
+node --input-type=module <<'JS'
+import { readFileSync } from 'node:fs';
+const events = readFileSync('.cae/desktop/events.jsonl', 'utf8').split('\n').filter(Boolean).map(JSON.parse);
+console.table(events.filter(e => e.event === 'decision').slice(-10).map(e => ({
+  time: e.time, mode: e.mode, source: e.source, incoming: e.incomingEffort,
+  suggested: e.proposedEffort, changed: e.changed, reason: e.reason
+})));
+JS
+```
+
+日志是追加式的，核对本次启动时间范围，不把旧实验结果算作本次验收。后续真实验收可用新纯文本会话依次测试：明确拼写修改、虚构并发问题分析、带前文的“继续”；核对 source=judge、建议档位、changed=false 与对应完成结果。发现错误先 off，再 stop，保留脱敏元数据，不自动重试。
+
+退出与恢复：
+
+```bash
+node bin/cae.mjs control off --config .cae/desktop/config.json
+node bin/cae.mjs desktop stop
+# 需要再次运行 baseline 实验时，省略 --enable-jev：
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt --enable-upstream
+```
+
+stop 成功后也可直接回到日常官方桌面；没有全局配置需要恢复。本次功能开发没有替用户停止、重配或重启已有桌面实例。
+
+### Jev 开关的离线验证（2026-09-28）
+
+基线 `c23877e180d5aa64da5c4f27a44b3fa5f68f0b33` 加本节所在功能提交的源码变更，macOS 27 arm64 / Node v24.16.0。`npm run verify` 通过：188 测试、0 失败/取消/跳过，30 模块语法和 JSON 检查、离线演示通过。覆盖显式开关/缺少密钥、进程级配置不落盘、HTTP 控制拒绝 auto/锁档、请求和 SSE 字节不变、调用上限/较小预算/超时、off 保留与重启回 baseline、原生子进程密钥隔离、脱敏日志及已有退出清理回归。Jev 与模型响应均为合成测试；本轮真实外部调用 0，未启动真实桌面 Jev 实例。
+
+13:57:18 +08:00 使用修改后的 doctor/probe 再次查询本机内置 CLI：两者退出码均为 0，CLI 仍为 `0.158.0-alpha.2.1`，`gpt-6-astra` 默认 medium，支持 low/medium/high/xhigh/max/ultra；没有发起生成。原始能力捕获与测试日志只留本机被忽略文件。
 
 ## 检查和失败行为
 

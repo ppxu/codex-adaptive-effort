@@ -16,6 +16,18 @@ test('shadow evaluates but forwards original object', async () => {
   const [c, j] = setup({ mode: 'shadow' }); const b = body(); const tx = await c.prepare(b);
   assert.equal(j.calls, 1); assert.equal(tx.changed, false); assert.equal(tx.body, b); assert.equal(tx.effort, 'low'); done(c, tx);
 });
+test('shadow-only policy rejects auto and locks atomically while allowing off and resume', async () => {
+  assert.throws(() => new Controller(config(), fakeJudge(), { shadowOnly: true }), /shadow_only_control/);
+  const j = fakeJudge(), c = new Controller(config({ mode: 'shadow' }), j, { shadowOnly: true });
+  const initial = c.status();
+  for (const patch of [{ mode: 'auto' }, { lockedEffort: 'low' }, { mode: 'off', lockedEffort: 'high' }]) {
+    assert.throws(() => c.control(patch), /shadow_only_control/); assert.deepEqual(c.status(), initial);
+  }
+  let b = body(); const first = await c.prepare(b); assert.equal(first.body, b); assert.equal(first.changed, false); done(c, first);
+  c.control({ mode: 'off' }); done(c, await c.prepare(b)); assert.equal(j.calls, 1);
+  c.control({ mode: 'shadow', lockedEffort: null }); done(c, await c.prepare(b)); assert.equal(j.calls, 2);
+  assert.equal(c.status().shadowOnly, true);
+});
 test('off never evaluates', async () => { const [c, j] = setup({ mode: 'off' }); const tx = await c.prepare(body()); assert.equal(j.calls, 0); assert.equal(tx.changed, false); done(c, tx); });
 test('model change passes through without forcing pinned model', async () => {
   const [c, j] = setup(); const tx = await c.prepare(body({ model: 'another-model' }));

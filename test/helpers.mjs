@@ -29,7 +29,7 @@ export function completedSse(id = 'resp_synthetic') {
       input_tokens_details: { cached_tokens: 40 }, output_tokens: 20, output_tokens_details: { reasoning_tokens: 8 } } } },
   ].map(e => 'event: ' + e.type + '\r\ndata: ' + JSON.stringify(e) + '\r\n\r\n').join(''));
 }
-export async function harness(t, { cfg = {}, judge = fakeJudge(), handler } = {}) {
+export async function harness(t, { cfg = {}, judge = fakeJudge(), handler, shadowOnly = false } = {}) {
   const records = [], events = []; let hit = 0;
   const server = http.createServer(async (req, res) => {
     try {
@@ -48,7 +48,7 @@ export async function harness(t, { cfg = {}, judge = fakeJudge(), handler } = {}
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const c = config({ ...cfg, port: 0, upstream: { kind: 'mock', baseUrl: `http://127.0.0.1:${server.address().port}/v1` } });
   const token = randomBytes(32).toString('hex');
-  const proxy = await startProxy(c, { token, judge, emit: event => events.push(event) });
+  const proxy = await startProxy(c, { token, judge, emit: event => events.push(event), shadowOnly });
   const base = `http://127.0.0.1:${proxy.port}`;
   const headers = { 'content-type': 'application/json', 'x-cae-token': token, authorization: 'Bearer synthetic-upstream-token', 'session_id': 'synthetic-session' };
   const api = {

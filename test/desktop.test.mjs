@@ -4,12 +4,13 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createServer, createConnection } from 'node:net';
 import { once } from 'node:events';
 import { defaultConfig } from '../src/config.mjs';
 import { codexArgs } from '../src/codex.mjs';
 import { CaeError } from '../src/util.mjs';
+import { startProxy } from '../src/proxy.mjs';
 import { eventually } from './helpers.mjs';
 import { DESKTOP_ARGS, TESTED_DESKTOP, checkDesktopVersion, validateDesktopCapabilities, validateDesktopConfig,
   verifyDesktopProvider, selectDescendants, parseProcessRows, startDesktop, desktopControl, desktopSocket } from '../src/desktop.mjs';
@@ -133,4 +134,72 @@ test('stop during metadata preflight prevents app launch', async t => {
   const rejected = assert.rejects(starting, /desktop_start_cancelled/); await preflight;
   await desktopControl(s.path, 'stop'); release();
   await rejected; assert.equal(spawned, false);
+});
+test('desktop Jev requires explicit opt-in and missing key fails before native startup', async t => {
+  const s = await setup(t), deps = dependencies(); deps.env = {};
+  deps.inspect = () => { assert.fail('must reject before native inspection'); };
+  await assert.rejects(startDesktop({ ...s.options, enableJev: true }, deps), /missing_typesafe_key/);
+  const cli = spawnSync(process.execPath, ['bin/cae.mjs', 'desktop', 'start', '--auth', 'chatgpt', '--enable-upstream', '--enable-jev'],
+    { encoding: 'utf8', env: { ...process.env, TYPESAFE_API_KEY: '' } });
+  assert.equal(cli.status, 1); assert.equal(cli.stderr.trim(), 'CAE: missing_typesafe_key');
+  const c = { ...s.c, judge: { ...s.c.judge, kind: 'typesafe' } };
+  assert.throws(() => validateDesktopConfig(c), /desktop_jev_not_enabled/);
+  validateDesktopConfig(c, { enableJev: true });
+  assert.throws(() => validateDesktopConfig({ ...c, mode: 'auto' }, { enableJev: true }), /off_or_shadow/);
+});
+test('desktop Jev is bounded process-only shadow; HTTP controls cannot enable auto or locks', async t => {
+  const s = await setup(t), deps = dependencies(); let proxy, calls = 0, spawnedEnv;
+  const original = readFileSync(s.path, 'utf8');
+  deps.env = { ...process.env, TYPESAFE_API_KEY: 'synthetic-desktop-jev-key' };
+  const spawnApp = deps.spawnApp;
+  deps.spawnApp = (...args) => { spawnedEnv = args[2].env; return spawnApp(...args); };
+  deps.startProxy = async (...args) => proxy = await startProxy(...args);
+  deps.judgeFetch = async (url, request) => {
+    ++calls; assert.equal(url, 'https://api.typesafe.ai/v1/systemone');
+    assert.equal(request.headers.authorization, 'Bearer synthetic-desktop-jev-key');
+    return new Response(JSON.stringify({ answers: { effort: { choice: 'low' }, lease: { choice: '1' } } }));
+  };
+  const desktop = await startDesktop({ ...s.options, enableJev: true }, deps); t.after(() => desktop.stop());
+  await desktopControl(s.path, 'bridge-ready'); await eventually(() => desktop.state().phase === 'running', 3000);
+  const status = await desktopControl(s.path, 'status');
+  assert.equal(status.judgeKind, 'typesafe'); assert.equal(status.shadowOnly, true); assert.equal(status.mode, 'shadow');
+  assert.equal(status.judgeCallLimit, 8); assert.equal(proxy.controller.config.judge.timeoutMs, 1500);
+  assert.equal(spawnedEnv.TYPESAFE_API_KEY, undefined); assert.equal(readFileSync(s.path, 'utf8'), original);
+  const headers = { 'x-cae-token': 'a'.repeat(64), 'content-type': 'application/json' };
+  const control = async patch => fetch(`http://127.0.0.1:${s.c.port}/control`, { method: 'POST', headers, body: JSON.stringify(patch) });
+  for (const patch of [{ mode: 'auto' }, { lockedEffort: 'high' }]) {
+    const response = await control(patch); assert.equal(response.status, 400);
+    assert.equal((await response.json()).error.code, 'shadow_only_control');
+  }
+  const b = { model: 'synthetic-model', reasoning: { effort: 'medium' }, input: '无敏感合成任务' };
+  // Exercise preparation only; never send synthetic-model to a real executor.
+  for (let i = 0; i < 9; ++i) {
+    const tx = await proxy.controller.prepare(b); assert.equal(tx.changed, false); assert.equal(tx.body, b);
+    assert.equal(tx.source, i < 8 ? 'judge' : 'fallback');
+    if (i === 8) assert.equal(tx.reason, 'judge_call_budget');
+    proxy.controller.finish(tx);
+  }
+  assert.equal(calls, 8);
+  assert.equal((await control({ mode: 'off' })).status, 200);
+  assert.equal((await control({ mode: 'shadow' })).status, 200);
+  assert.equal(proxy.controller.judgeCalls, 8); // Mode toggles do not renew budget.
+  await desktop.stop(); await desktop.done;
+  const log = readFileSync(join(s.dir, 'events.jsonl'), 'utf8');
+  assert(!log.includes('synthetic-desktop-jev-key')); assert(!log.includes('无敏感合成任务'));
+  assert.equal(log.split('\n').filter(Boolean).map(JSON.parse).filter(r => r.event === 'decision' && r.source === 'judge').length, 8);
+  const next = await startDesktop(s.options, dependencies()); t.after(() => next.stop());
+  assert.equal(next.state().judgeKind, 'baseline'); assert.equal(next.state().shadowOnly, false);
+  await next.stop(); await next.done;
+});
+test('desktop Jev respects stricter existing timeout and budget and preserves off startup', async t => {
+  const s = await setup(t), deps = dependencies();
+  s.c.mode = 'off'; s.c.judge.maxCalls = 2; s.c.judge.timeoutMs = 100;
+  writeFileSync(s.path, JSON.stringify(s.c));
+  deps.env = { ...process.env, TYPESAFE_API_KEY: 'synthetic-only' }; let runtime;
+  deps.startProxy = async (c, opts) => { runtime = c; return startProxy(c, opts); };
+  deps.judgeFetch = () => assert.fail('startup must not call Jev');
+  const desktop = await startDesktop({ ...s.options, enableJev: true }, deps); t.after(() => desktop.stop());
+  assert.equal(runtime.judge.maxCalls, 2); assert.equal(runtime.judge.timeoutMs, 100);
+  assert.equal(desktop.state().mode, 'off'); assert.equal(desktop.state().judgeCalls, 0);
+  await desktop.stop(); await desktop.done;
 });

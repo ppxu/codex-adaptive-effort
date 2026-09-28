@@ -3,8 +3,11 @@ import { createInterface } from 'node:readline';
 import { CaeError } from './util.mjs';
 import { EFFORT_NAMES } from './config.mjs';
 
+export function nativeEnvironment(source = process.env) {
+  const env = { ...source }; delete env.TYPESAFE_API_KEY; return env;
+}
 export function doctor(binary = 'codex') {
-  const check = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 5000, windowsHide: true });
+  const check = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 5000, windowsHide: true, env: nativeEnvironment() });
   return { node: process.version, platform: process.platform, architecture: process.arch,
     codexFound: !check.error && check.status === 0,
     codexVersion: /codex[^\r\n]{0,50}\d[^\r\n]{0,50}/i.exec(check.stdout ?? '')?.[0] ?? null,
@@ -22,7 +25,7 @@ export function normalizeModel(m) {
 /** Only initialize + model/list. No turns, tool calls, credentials API or file API. */
 export async function probeModels(binary = 'codex', { args = ['app-server'], timeoutMs = 15000 } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(binary, args, { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+    const child = spawn(binary, args, { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true, env: nativeEnvironment() });
     const rl = createInterface({ input: child.stdout });
     let settled = false, nextId = 2, expected = 1, pages = 0, outputBytes = 0;
     const models = []; const cursors = new Set();

@@ -9,9 +9,9 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { CaeError, digest, equalSecret } from './util.mjs';
 import { defaultConfig, loadConfig, readLocalToken } from './config.mjs';
-import { codexArgs, probeModels } from './codex.mjs';
+import { codexArgs, probeModels, nativeEnvironment } from './codex.mjs';
 import { startProxy } from './proxy.mjs';
-import { BaselineJudge } from './judge.mjs';
+import { BaselineJudge, TypeSafeJudge } from './judge.mjs';
 import { Audit } from './audit.mjs';
 
 const run = promisify(execFile);
@@ -30,14 +30,15 @@ export function checkDesktopVersion(info) {
 export async function inspectDesktop(appPath = '/Applications/ChatGPT.app') {
   if (process.platform !== 'darwin' || process.arch !== 'arm64') throw new CaeError('desktop_requires_macos_arm64');
   const app = realpathSync(appPath), plist = join(app, 'Contents/Info.plist');
-  const value = async key => (await run('/usr/libexec/PlistBuddy', ['-c', `Print :${key}`, plist], { timeout: 5000 })).stdout.trim();
+  const env = nativeEnvironment();
+  const value = async key => (await run('/usr/libexec/PlistBuddy', ['-c', `Print :${key}`, plist], { timeout: 5000, env })).stdout.trim();
   let info;
   try {
-    await run('/usr/bin/codesign', ['--verify', '--deep', '--strict', '-R=identifier "com.openai.codex" and anchor apple generic and certificate leaf[subject.OU] = "2DC432GLL2"', app], { timeout: 15000 });
+    await run('/usr/bin/codesign', ['--verify', '--deep', '--strict', '-R=identifier "com.openai.codex" and anchor apple generic and certificate leaf[subject.OU] = "2DC432GLL2"', app], { timeout: 15000, env });
     const executable = join(app, 'Contents/MacOS/ChatGPT');
     const binary = join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
     info = { app, executable, binary, version: await value('CFBundleShortVersionString'), build: await value('CFBundleVersion'),
-      cli: (await run(binary, ['--version'], { timeout: 5000 })).stdout.trim() };
+      cli: (await run(binary, ['--version'], { timeout: 5000, env })).stdout.trim() };
   } catch { throw new CaeError('desktop_bundle_verification_failed'); }
   checkDesktopVersion(info); return info;
 }
@@ -47,9 +48,9 @@ export function validateDesktopCapabilities(config, capture) {
   if (!model || !model.supportedEfforts.includes(config.baseline) ||
       config.supportedEfforts.some(e => !model.supportedEfforts.includes(e))) throw new CaeError('desktop_capabilities_changed');
 }
-export function validateDesktopConfig(config) {
+export function validateDesktopConfig(config, { enableJev = false } = {}) {
   if (config.upstream.kind !== 'chatgpt') throw new CaeError('desktop_requires_chatgpt_route');
-  if (config.judge.kind !== 'baseline') throw new CaeError('desktop_jev_not_enabled');
+  if (config.judge.kind !== 'baseline' && !enableJev) throw new CaeError('desktop_jev_not_enabled');
   if (!['off', 'shadow'].includes(config.mode)) throw new CaeError('desktop_start_requires_off_or_shadow');
   if (!config.port) throw new CaeError('fixed_port_required_for_codex');
 }
@@ -135,7 +136,7 @@ export function parseProcessRows(stdout) {
   });
 }
 async function processRows() {
-  const { stdout } = await run('/bin/ps', ['-axo', 'pid=,ppid=,lstart=,comm='], { timeout: 5000, env: { ...process.env, LC_ALL: 'C' } });
+  const { stdout } = await run('/bin/ps', ['-axo', 'pid=,ppid=,lstart=,comm='], { timeout: 5000, env: { ...nativeEnvironment(), LC_ALL: 'C' } });
   return parseProcessRows(stdout);
 }
 export function trackDesktop(child) {
@@ -161,10 +162,12 @@ export function trackDesktop(child) {
 }
 
 export async function startDesktop(options, dependencies = {}) {
+  const environment = dependencies.env ?? process.env;
   const inspect = dependencies.inspect ?? inspectDesktop, probe = dependencies.probe ?? probeModels;
   const verify = dependencies.verify ?? verifyDesktopProvider;
   if (!options.enableUpstream) throw new CaeError('upstream_not_enabled');
   if (options.auth !== 'chatgpt') throw new CaeError('desktop_requires_chatgpt_route');
+  if (options.enableJev && !environment.TYPESAFE_API_KEY?.trim()) throw new CaeError('missing_typesafe_key');
   const configPath = resolve(options.configPath), dir = dirname(configPath);
   const app = await inspect(options.appPath);
   const capture = await probe(app.binary);
@@ -180,7 +183,12 @@ export async function startDesktop(options, dependencies = {}) {
   }
   const st = lstatSync(dir);
   if (!st.isDirectory() || st.isSymbolicLink() || (process.platform !== 'win32' && (st.mode & 0o077))) throw new CaeError('desktop_private_directory_required');
-  const c = loadConfig(configPath); validateDesktopConfig(c); validateDesktopCapabilities(c, capture);
+  const c = loadConfig(configPath); validateDesktopConfig(c, options); validateDesktopCapabilities(c, capture);
+  // Process-only opt-in. Never persist an external evaluator or weaken a smaller configured budget.
+  if (options.enableJev) c.judge = { ...c.judge, kind: 'typesafe',
+    maxCalls: Math.min(c.judge.maxCalls, 8), timeoutMs: Math.min(c.judge.timeoutMs, 1500) };
+  const judge = options.enableJev ? new TypeSafeJudge({ apiKey: environment.TYPESAFE_API_KEY,
+    model: c.judge.model, fetchImpl: dependencies.judgeFetch }) : new BaselineJudge();
   if ((options.model && options.model !== c.model) || (options.baseline && options.baseline !== c.baseline)) throw new CaeError('desktop_config_selection_mismatch');
   const token = readLocalToken(c.tokenFile), socketPath = desktopSocket(configPath);
   let proxy, audit, child, cleanupChild, stopping = false, phase = 'starting', bridgeChecks = 0, connected = false, startupTimer, stopPromise;
@@ -242,7 +250,7 @@ export async function startDesktop(options, dependencies = {}) {
     await preflight;
     if (stopping) throw new CaeError('desktop_start_cancelled');
     audit = new Audit(c.logFile);
-    proxy = await startProxy(c, { token, judge: new BaselineJudge(), allowUpstream: true,
+    proxy = await (dependencies.startProxy ?? startProxy)(c, { token, judge, allowUpstream: true, shadowOnly: options.enableJev === true,
       emit: record => audit.emit(record), auditHealthy: () => !audit.failed });
     if (stopping) { await proxy.close(); throw new CaeError('desktop_start_cancelled'); }
     const userData = join(dir, 'desktop-user-data'), bridge = join(dir, 'desktop-bridge');
@@ -252,7 +260,7 @@ export async function startDesktop(options, dependencies = {}) {
     // Refuse to follow an existing symlink when refreshing our generated launcher.
     if (existsSync(bridge) && (!lstatSync(bridge).isFile() || lstatSync(bridge).isSymbolicLink())) throw new CaeError('desktop_bridge_path_invalid');
     writeFileSync(bridge, `#!/bin/sh\nexec ${quote(process.execPath)} ${quote(bridgeBin)} ${quote(configPath)} ${quote(app.binary)} "$@"\n`, { mode: 0o700 });
-    const env = { ...process.env, CODEX_ELECTRON_USER_DATA_PATH: userData, CODEX_CLI_PATH: bridge, CODEX_APP_SERVER_FORCE_CLI: '1' };
+    const env = { ...environment, CODEX_ELECTRON_USER_DATA_PATH: userData, CODEX_CLI_PATH: bridge, CODEX_APP_SERVER_FORCE_CLI: '1' };
     delete env.CAE_LOCAL_TOKEN; delete env.TYPESAFE_API_KEY;
     child = (dependencies.spawnApp ?? spawn)(app.executable, ['--user-data-dir=' + userData], { env, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
     cleanupChild = (dependencies.track ?? trackDesktop)(child);

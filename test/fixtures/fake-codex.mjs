@@ -1,6 +1,7 @@
 // Synthetic app-server fixture only. Never reads auth or contacts a provider.
 import { createInterface } from 'node:readline';
 const scenario = process.argv[2] ?? 'ok';
+if (scenario === 'reject-jev-key' && process.env.TYPESAFE_API_KEY !== undefined) process.exit(92);
 const rl = createInterface({ input: process.stdin });
 let initialized = false, listed = false;
 const send = value => process.stdout.write(JSON.stringify(value) + '\n');

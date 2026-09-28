@@ -4,14 +4,16 @@ import { inspectRequest, canContinue } from './context.mjs';
 
 /** A single owner per session. Only a completed upstream response commits a lease. */
 export class Controller {
-  constructor(config, judge, { now = Date.now, emit = () => {} } = {}) {
+  constructor(config, judge, { now = Date.now, emit = () => {}, shadowOnly = false } = {}) {
+    if (shadowOnly && !['off', 'shadow'].includes(config.mode)) throw new CaeError('shadow_only_control');
+    this.shadowOnly = shadowOnly;
     this.config = config; this.judge = judge; this.now = now; this.emit = emit;
     this.mode = config.mode; this.lockedEffort = null; this.revision = 0;
     this.sessions = new Map(); this.active = new Map(); this.judgeCalls = 0;
     this.failures = 0; this.circuitUntil = 0;
   }
   status() {
-    return { mode: this.mode, lockedEffort: this.lockedEffort, revision: this.revision,
+    return { mode: this.mode, shadowOnly: this.shadowOnly, lockedEffort: this.lockedEffort, revision: this.revision,
       model: this.config.model, supportedEfforts: this.config.supportedEfforts,
       judgeKind: this.config.judge.kind, judgeCalls: this.judgeCalls,
       judgeCallLimit: this.config.judge.maxCalls, circuitOpen: this.now() < this.circuitUntil,
@@ -22,6 +24,8 @@ export class Controller {
       throw new CaeError('invalid_control');
     if ('mode' in patch && !['off', 'shadow', 'auto'].includes(patch.mode)) throw new CaeError('invalid_mode');
     if ('lockedEffort' in patch && patch.lockedEffort !== null && !this.config.supportedEfforts.includes(patch.lockedEffort)) throw new CaeError('unsupported_lock');
+    if (this.shadowOnly && (patch.mode === 'auto' || ('lockedEffort' in patch && patch.lockedEffort !== null)))
+      throw new CaeError('shadow_only_control');
     if ('mode' in patch) this.mode = patch.mode;
     if ('lockedEffort' in patch) this.lockedEffort = patch.lockedEffort;
     ++this.revision; this.sessions.clear();
