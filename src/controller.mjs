@@ -16,6 +16,7 @@ export class Controller {
     return { mode: this.mode, shadowOnly: this.shadowOnly, lockedEffort: this.lockedEffort, revision: this.revision,
       model: this.config.model, supportedEfforts: this.config.supportedEfforts,
       judgeKind: this.config.judge.kind, judgeCalls: this.judgeCalls,
+      judgeTimeoutMs: this.config.judge.timeoutMs,
       judgeCallLimit: this.config.judge.maxCalls, circuitOpen: this.now() < this.circuitUntil,
       retainedSessions: this.sessions.size, activeRequests: this.active.size };
   }

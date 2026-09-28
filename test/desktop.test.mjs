@@ -224,6 +224,55 @@ test('desktop auto opt-in requires Jev, is start-only, and never permits auto st
   assert.throws(() => validateDesktopConfig({ ...s.c, mode: 'auto' }, { enableJev: true, allowJevAuto: true }), /off_or_shadow/);
 });
 
+test('desktop timeout override rejects invalid values, wrong commands and missing Jev opt-in before native startup', async t => {
+  const s = await setup(t), deps = dependencies();
+  deps.inspect = () => assert.fail('must reject before native inspection');
+  await assert.rejects(startDesktop({ ...s.options, jevTimeoutMs: 2000 }, deps), /desktop_timeout_requires_jev/);
+  for (const value of [0, 1501, 2001, NaN, Infinity, '2000', null])
+    await assert.rejects(startDesktop({ ...s.options, enableJev: true, jevTimeoutMs: value }, deps), /desktop_invalid_jev_timeout/);
+  for (const [args, code] of [
+    [['desktop', 'status', '--jev-timeout-ms', '2000'], 'desktop_timeout_start_only'],
+    [['serve', '--jev-timeout-ms', '2000'], 'desktop_timeout_start_only'],
+    [['desktop', 'start', '--auth', 'chatgpt', '--enable-upstream', '--jev-timeout-ms', '2000'], 'desktop_timeout_requires_jev'],
+    ...['', '2001', '2e3', 'NaN'].map(value => [['desktop', 'start', '--jev-timeout-ms', value], 'desktop_invalid_jev_timeout']),
+  ]) {
+    const cli = spawnSync(process.execPath, ['bin/cae.mjs', ...args], { encoding: 'utf8', env: { ...process.env, TYPESAFE_API_KEY: '' } });
+    assert.equal(cli.status, 1); assert.equal(cli.stderr.trim(), 'CAE: ' + code);
+  }
+});
+
+test('desktop 2000 ms timeout is process-only, retains call budget and restores 1500 ms on restart', async t => {
+  const s = await setup(t), deps = dependencies(); let proxy;
+  s.c.judge.maxCalls = 2; writeFileSync(s.path, JSON.stringify(s.c));
+  const disk = readFileSync(s.path, 'utf8');
+  deps.env = { ...process.env, TYPESAFE_API_KEY: 'synthetic-timeout-key' };
+  deps.startProxy = async (...args) => proxy = await startProxy(...args);
+  deps.judgeFetch = async (_url, request) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(new Response(JSON.stringify({ answers: { effort: { choice: 'low' }, lease: { choice: '1' } } }))), 1700);
+    request.signal.addEventListener('abort', () => { clearTimeout(timer); reject(new Error('synthetic abort')); }, { once: true });
+  });
+  // Same delayed synthetic response exercises both deadlines, without any external executor request.
+  for (const timeout of [2000, undefined, 1500]) {
+    const desktop = await startDesktop({ ...s.options, enableJev: true, allowJevAuto: true, jevTimeoutMs: timeout }, deps);
+    t.after(() => desktop.stop());
+    const status = await desktopControl(s.path, 'status');
+    assert.equal(status.judgeTimeoutMs, timeout ?? 1500); assert.equal(status.judgeCallLimit, 2);
+    assert.equal(status.mode, 'shadow'); assert.equal(status.judgeCalls, 0);
+    proxy.controller.control({ mode: 'auto' });
+    const b = body({ reasoning: { effort: 'medium' } }), tx = await proxy.controller.prepare(b);
+    assert.equal(tx.source, timeout === 2000 ? 'judge' : 'fallback');
+    assert.equal(tx.changed, timeout === 2000);
+    assert.equal(tx.body.reasoning.effort, timeout === 2000 ? 'low' : 'medium');
+    assert.equal(tx.reason, timeout === 2000 ? null : 'judge_timeout');
+    proxy.controller.finish(tx);
+    proxy.controller.control({ mode: 'off' });
+    assert.equal(proxy.controller.status().judgeTimeoutMs, timeout ?? 1500);
+    assert.equal(proxy.controller.status().judgeCalls, 1);
+    assert.equal(readFileSync(s.path, 'utf8'), disk);
+    await desktop.stop(); await desktop.done;
+  }
+});
+
 test('desktop auto opt-in changes only effort over HTTP, preserves fallback/off bytes and resets permission on restart', async t => {
   const s = await setup(t), deps = dependencies(); let calls = 0, runtime, spawnedEnv;
   s.c.mode = 'off'; s.c.judge.maxCalls = 4; s.c.judge.timeoutMs = 100;

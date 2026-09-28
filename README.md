@@ -49,7 +49,7 @@ node bin/cae.mjs desktop status
 node bin/cae.mjs desktop stop
 ```
 
-首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。`--enable-jev` 显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；另外添加 `--allow-jev-auto` 才允许随后通过 `control auto` 开始实验性自动改档。第二组三条桌面 shadow 请求均成功；后续 auto 实测完成 medium → high，另一次 Jev 超时后保持 medium。自动降档及稳定性仍未验证通过。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
+首次自动创建独立 CAE 配置，每次查询实际模型能力并校验生效的 provider；默认 shadow + baseline，不启用 Jev。`--enable-jev` 显式启用进程级 Jev shadow，最多 8 次判断，禁止 auto/锁档；另外添加 `--allow-jev-auto` 才允许随后通过 `control auto` 开始实验性自动改档。第二组三条桌面 shadow 请求均成功；后续 auto 实测完成 medium → high，另一次 Jev 超时后保持 medium。自动降档及稳定性仍未验证通过。可显式添加 `--jev-timeout-ms 2000` 进行仅本进程生效的超时实验，默认仍为 1500 ms。请在新实例中新建 Codex 本地任务，旧会话不会自动迁移。版本限制、实例辨认和控制命令见 [桌面启动器说明](docs/DESKTOP_LAUNCHER.md)。
 
 先读 [LOCAL_VALIDATION.md](docs/LOCAL_VALIDATION.md)，按「原版 → off → 手动 auto → Jev shadow → Jev auto」逐级验证。**这不是默认启用的桌面兼容承诺。** 首版提供可撤销的 CLI 路径验证代理；本机独立桌面实例已通过启动、纯文本 off/手动锁档及取消恢复，见 [桌面检查记录](docs/DESKTOP_ACCEPTANCE.md)。
 

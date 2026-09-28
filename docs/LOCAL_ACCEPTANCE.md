@@ -202,6 +202,26 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+### 2000 ms 进程级实验准备（2026-09-28 14:54–14:56 +08:00）
+
+用户同意继续验证 2000 ms 与真实自动降档。被测源码为 `b60d71f37270bc739fc833dffb37414a80530ad9` 加本节同提交的源码补丁；该基线 CI 已成功，新提交 CI 单独核验。新增 `desktop start --enable-jev --jev-timeout-ms 1500|2000`，仅覆盖当前进程超时、不写配置；未指定参数时继续取磁盘值与 1500 ms 的较小值。保留最多 8 次判断、更小调用预算、不重试和错误回退，状态接口新增实际生效的 judgeTimeoutMs。未改变网络实现或超时阶段观测。
+
+本机仍为 macOS 27.0 arm64 / Node v24.16.0 / 桌面 26.924.22138 / 内置 CLI 0.158.0-alpha.2.1，CLI 路径沿用下节记录。`npm run verify` 退出 0：199 测试全部通过，0 失败/取消/跳过，32 模块语法、JSON 和离线演示通过；依赖文件未变，沿用 14:41 的 `npm ci --ignore-scripts` 结果。新增回归检查非法参数/错误命令/缺少 Jev 授权拒绝、进程配置不落盘、调用上限保留，以及同样延迟 1700 ms 的合成判断在 2000 ms 下返回 low、在默认及显式 1500 ms 下超时保持 medium。该测试仅证明时限接线，不能证明真实服务性能。
+
+14:54:42 的真实 doctor/probe 均退出 0；`gpt-6-astra` 默认 medium，实际支持 low/medium/high/xhigh/max/ultra。随后真实实例签名、版本、provider 检查通过，running、bridgeChecks=2、effectiveProvider=cae；切到 auto 后 judgeTimeoutMs=2000、judgeCalls=0/8、lockedEffort=null、activeRequests=0。磁盘配置仍为 shadow / baseline / 1500 ms，没有新增真实 Jev 判断或模型生成。
+
+被测运行文件 SHA-256：
+
+| 文件 | SHA-256 |
+|---|---|
+| src/desktop.mjs | 408ab4009cff7cf0b1f62a338613080f0087e4da25c42e2f495ad9771414ea14 |
+| src/controller.mjs | b86a4b0099b6ea8a04a471c19a7f216955ab59b55261509868bfa0ebefc6c828 |
+| bin/cae.mjs | 6a00b448a1d9f3958481ef97d2e1408edf42ddbc6eb3495d712e3b76b002cbdf |
+
+**已通过：** 新参数离线验证、实际能力查询、真实实例 2000 ms 生效和 auto 切换。**待验收：** 一条与上轮相同的拼写任务是否获得 low 并实际发送完成、真实超时是否缓解，以及本次停止恢复；当前没有证据宣称 2000 ms 优于 1500 ms。
+
+下一步只发送一条无工具拼写样例，保留同一主模型和客户端 medium，使用独立无敏感目录的新本地会话。按 [2000 ms 步骤](DESKTOP_LAUNCHER.md#可选-2000-ms-实验) 关联 decision → sent → completed；超时或未降档如实记录，不自动追加。完成后 `node bin/cae.mjs control off --config .cae/desktop/config.json`，再 `node bin/cae.mjs desktop stop`。去掉参数重启即恢复默认时限，无需修改日常配置。原始日志与能力捕获均被忽略，不提交。
+
 ### 桌面 Jev auto 首轮真实验收（2026-09-28 14:45–14:46 +08:00）
 
 被测源码 `d8407feb878879140b17202bb1864593864cde00`；[对应 CI 36387895997](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36387895997) 已核验成功。沿用同一源码在 14:41–14:42 完成的 197 项本机测试、doctor 和 model/list 结果，下节保留环境和源文件校验值。本轮仅更新脱敏记录，不修改运行代码，不新增重试或模型调用。

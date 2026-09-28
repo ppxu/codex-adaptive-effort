@@ -168,6 +168,10 @@ export async function startDesktop(options, dependencies = {}) {
   if (!options.enableUpstream) throw new CaeError('upstream_not_enabled');
   if (options.auth !== 'chatgpt') throw new CaeError('desktop_requires_chatgpt_route');
   if (options.allowJevAuto && !options.enableJev) throw new CaeError('desktop_auto_requires_jev');
+  if (options.jevTimeoutMs !== undefined) {
+    if (!options.enableJev) throw new CaeError('desktop_timeout_requires_jev');
+    if (![1500, 2000].includes(options.jevTimeoutMs)) throw new CaeError('desktop_invalid_jev_timeout');
+  }
   if (options.enableJev && !environment.TYPESAFE_API_KEY?.trim()) throw new CaeError('missing_typesafe_key');
   const configPath = resolve(options.configPath), dir = dirname(configPath);
   const app = await inspect(options.appPath);
@@ -185,9 +189,9 @@ export async function startDesktop(options, dependencies = {}) {
   const st = lstatSync(dir);
   if (!st.isDirectory() || st.isSymbolicLink() || (process.platform !== 'win32' && (st.mode & 0o077))) throw new CaeError('desktop_private_directory_required');
   const c = loadConfig(configPath); validateDesktopConfig(c, options); validateDesktopCapabilities(c, capture);
-  // Process-only opt-in. Never persist an external evaluator or weaken a smaller configured budget.
+  // Process-only opt-in. Keep the call cap; only an explicit timeout option overrides the disk timeout.
   if (options.enableJev) c.judge = { ...c.judge, kind: 'typesafe',
-    maxCalls: Math.min(c.judge.maxCalls, 8), timeoutMs: Math.min(c.judge.timeoutMs, 1500) };
+    maxCalls: Math.min(c.judge.maxCalls, 8), timeoutMs: options.jevTimeoutMs ?? Math.min(c.judge.timeoutMs, 1500) };
   const judge = options.enableJev ? new TypeSafeJudge({ apiKey: environment.TYPESAFE_API_KEY,
     model: c.judge.model, fetchImpl: dependencies.judgeFetch }) : new BaselineJudge();
   if ((options.model && options.model !== c.model) || (options.baseline && options.baseline !== c.baseline)) throw new CaeError('desktop_config_selection_mismatch');

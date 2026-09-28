@@ -81,7 +81,7 @@ node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \
 
 开关仅对本次进程生效：将运行时判断器设为 typesafe，不写回磁盘配置；初始 mode 仍遵循配置的 shadow/off，auto 配置拒绝启动。未带开关时继续使用 baseline；若操作者已手动将磁盘 judge.kind 改为 typesafe，则没有开关会拒绝启动，不静默启用第三方。
 
-每个启用 Jev 的启动进程最多 8 次判断、单次超时最多 1500 ms；配置已有更小上限时继续使用更小值。达到上限后保持来请求档位，记录 `judge_call_budget`；不重试、不切换服务商。off/shadow 切换不重置计数，重启是新一批调用，不是同一次预算。超时或取消的请求仍可能产生服务端费用；次数不是金额保证。
+每个启用 Jev 的启动进程最多 8 次判断。未指定超时实验参数时，单次超时最多 1500 ms，配置已有更小上限时继续使用更小值；显式的 2000 ms 实验见下节。达到次数上限后保持来请求档位，记录 `judge_call_budget`；不重试、不切换服务商。off/shadow 切换不重置计数，重启是新一批调用，不是同一次预算。超时或取消的请求仍可能产生服务端费用；次数不是金额保证。
 
 启动本身不主动提交测试任务。用户发送合格任务时，有限任务文本会发给 TypeSafe，同时原任务会照常使用原生 ChatGPT 模型额度。不要在这个实例中处理未授权的日常任务或敏感代码；窗口和代理没有按任务自动筛选“是否敏感”的能力。独立 Jev 密钥只供 CAE 判断器使用，模型探针、原生 CLI 和桌面子进程均不继承它。
 
@@ -146,7 +146,7 @@ node bin/cae.mjs desktop status
 node bin/cae.mjs control auto --config .cae/desktop/config.json
 ```
 
-预期 mode=auto、lockedEffort=null，最多 8 次判断、每次最多 1500 ms；更小的既有配置继续有效，模式切换不刷新次数。建议不合法、超时或次数耗尽时继续沿用既有控制器的回退规则；显式来请求档位保持不变，未指定档位才使用已核对的 baseline。不支持的请求历史和其他模型仍原样旁路。
+预期 mode=auto、lockedEffort=null，最多 8 次判断。未指定超时参数时，每次最多 1500 ms，更小的既有配置继续有效；状态中的 judgeTimeoutMs 是实际生效值。模式切换不刷新次数。建议不合法、超时或次数耗尽时继续沿用既有控制器的回退规则；显式来请求档位保持不变，未指定档位才使用已核对的 baseline。不支持的请求历史和其他模型仍原样旁路。
 
 用独立无敏感目录，在实验窗口中新建本地会话，选择实际探针返回的 `gpt-6-astra` 和 medium，保持桌面选择不变，依次发送并等待完成：
 
@@ -164,6 +164,22 @@ node bin/cae.mjs desktop stop
 ```
 
 off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 已验证 medium → high 且正常完成；另一条 Jev 超时，回退 medium 并完成，自动降档尚未实测通过。本实例 off → stop 清理通过，详见 [本机记录](LOCAL_ACCEPTANCE.md)。
+
+### 可选 2000 ms 实验
+
+默认超时没有调整。只有在 `desktop start --enable-jev` 中显式添加 `--jev-timeout-ms 2000`，才将本进程的判断超时设为 2000 ms；参数只接受 1500 或 2000，覆盖本次运行的磁盘 timeout，包括磁盘中更小的值，不写回配置。次数上限不变，不重试、不改变 fetch 连接池或端点。其他命令、缺少 Jev 开关或不合法的值会拒绝，不悄悄忽略。
+
+```bash
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \
+  --enable-upstream --enable-jev --allow-jev-auto --jev-timeout-ms 2000
+# 另一终端，确认 running、judgeTimeoutMs=2000、judgeCalls=0，再切 auto：
+node bin/cae.mjs desktop status
+node bin/cae.mjs control auto --config .cae/desktop/config.json
+```
+
+先只在独立无敏感目录的新本地会话发送上面的拼写任务，固定主模型和客户端 medium。核对 Jev 建议、sent effort、changed 和 completed；若成功降到 low，记为真实降档通过。若建议 medium、超时或旁路，如实记录，不自动重发。同一个成功样例不能证明 2000 ms 优于 1500 ms；不同批次的连接与上下文可能不同，若返回时间仍小于 1500 ms，也不能把成功归功于放宽超时。
+
+检查后 off/stop，命令同上。去掉超时参数重新启动，恢复原有磁盘值与 1500 ms 上限；无需回写配置。2000 ms 的真实改善和自动降档尚待采样，最坏超时等待比默认增加约 500 ms。
 
 ## 检查和失败行为
 

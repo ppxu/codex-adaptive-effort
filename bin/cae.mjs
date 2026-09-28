@@ -31,6 +31,7 @@ Shared: --config .cae/config.json; init: --dir .cae
 serve Jev requires config judge.kind=typesafe, TYPESAFE_API_KEY and --enable-jev.
 Desktop --enable-jev is process-only, shadow/off only, at most 8 evaluations.
 Add --allow-jev-auto to permit control auto; startup still requires shadow/off.
+Desktop --jev-timeout-ms 1500|2000 overrides only this process's Jev timeout.
 An external upstream requires --enable-upstream and normal Codex auth.
 Default is SHADOW with a baseline-only evaluator, not a complexity classifier.
 `;
@@ -55,10 +56,13 @@ async function main() {
       codex: { type: 'string', default: 'codex' }, 'enable-upstream': { type: 'boolean' }, 'enable-jev': { type: 'boolean' },
       app: { type: 'string' },
       'allow-jev-auto': { type: 'boolean' },
+      'jev-timeout-ms': { type: 'string' },
     } });
   const command = p[0];
   if (!command || v.help) { print(HELP); return; }
   if (v['allow-jev-auto'] && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_auto_start_only');
+  if (v['jev-timeout-ms'] !== undefined && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_timeout_start_only');
+  if (v['jev-timeout-ms'] !== undefined && !['1500', '2000'].includes(v['jev-timeout-ms'])) throw new CaeError('desktop_invalid_jev_timeout');
   if (command === 'desktop') {
     if (p.length !== 2 || passthrough.length) throw new CaeError('desktop_invalid_arguments');
     if (input.some(x => x === '--codex' || x.startsWith('--codex='))) throw new CaeError('desktop_uses_verified_bundled_cli');
@@ -68,6 +72,7 @@ async function main() {
     if (p[1] === 'start') {
       const desktop = await startDesktop({ configPath, model: v.model, baseline: v.baseline, auth: v.auth,
         enableUpstream: v['enable-upstream'], enableJev: v['enable-jev'], allowJevAuto: v['allow-jev-auto'],
+        jevTimeoutMs: v['jev-timeout-ms'] === undefined ? undefined : Number(v['jev-timeout-ms']),
         appPath: v.app, onState: print });
       print(await desktop.done); return;
     }
