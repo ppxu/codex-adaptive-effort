@@ -163,7 +163,7 @@ node bin/cae.mjs report --config .cae/desktop/config.json
 node bin/cae.mjs desktop stop
 ```
 
-off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 结果待采集；具体源码、离线验证和本机启动状态见 [本机记录](LOCAL_ACCEPTANCE.md)。
+off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 已验证 medium → high 且正常完成；另一条 Jev 超时，回退 medium 并完成，自动降档尚未实测通过。本实例 off → stop 清理通过，详见 [本机记录](LOCAL_ACCEPTANCE.md)。
 
 ## 检查和失败行为
 

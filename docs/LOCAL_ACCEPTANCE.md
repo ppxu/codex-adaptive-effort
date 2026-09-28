@@ -202,6 +202,29 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+### 桌面 Jev auto 首轮真实验收（2026-09-28 14:45–14:46 +08:00）
+
+被测源码 `d8407feb878879140b17202bb1864593864cde00`；[对应 CI 36387895997](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36387895997) 已核验成功。沿用同一源码在 14:41–14:42 完成的 197 项本机测试、doctor 和 model/list 结果，下节保留环境和源文件校验值。本轮仅更新脱敏记录，不修改运行代码，不新增重试或模型调用。
+
+用户按计划在独立实验窗口完成两条无工具合成任务；CAE 以本次时间窗口和 requestId 在本地关联建议、准备、发送与完成事件，不读取原生任务正文。固定主模型 `gpt-6-astra`，两条来请求均为 medium，无手动锁档。
+
+| 顺序 / 场景 | Jev 结果与耗时 | 实际发送 | 上游结果 |
+|---|---|---|---|
+| 1 / 拼写修改 | 1511 ms，judge_timeout，source=fallback，无有效建议 | medium → medium，changed=false | HTTP 200，response.completed |
+| 2 / 虚构并发分析 | 1137 ms，source=judge，建议 high，lease=1，confidence=0.41 | medium → high，changed=true；prepared/sent 均为 high | HTTP 200，response.completed |
+
+第二条已建立真实 Jev 建议到实际传输改档再到成功完成的证据链；不把桌面选择器显示的 medium 当作代理实际发送值，也不把传输档位或 reasoning token 计数视为实际算力分配、质量或成本收益证明。第一条的 proposedEffort=medium 是回退值，不是 Jev 建议。额外一条客户端 `gpt-6-luna` / low 请求因 different_model 原样旁路并完成，无 Jev 调用；未读取正文，不断言用途，也不是 CAE 切换主模型。
+
+本进程合计 2 次 Jev 尝试、1 次成功判断、1 次超时；3 次上游发送均成功完成，其中仅 1 次改档。已知 Jev 输入用量为 908 token，超时调用用量未知；Jev 响应模型版本和输出用量未采集，均未知。超时仍可能计费，未增加调用预算。
+
+这次超时的最后观测阶段为 `created`：请求创建在 8.2 ms，最后观测在 1510.2 ms，sendStart/bodySent/headers/body/validated 全为空。它说明超时前没有记录到发送开始，调查应优先关注发送前的排队/建连阶段；当前观测不能拆分 DNS、TCP、TLS 或确定实际网络根因，不能归因为 Jev 服务端推理，也不能证明请求未到服务端或没有计费。旧批次两次超时仍无阶段数据，不能追溯套用本次结论。
+
+成功样例的累计阶段值为：created 0.7 ms、sendStart 407.9 ms、bodySent 415.0 ms、headers 1105.7 ms、body 1135.9 ms、validated 1136.2 ms。请求发完到响应头为 690.7 ms，包含网络和服务端处理，不等同于纯推理时间。保持原生 fetch、1500 ms 上限与失败回退，不因两条样例调整网络实现。
+
+验收后 14:46:18 切回 off，确认 judgeCalls=2/8、activeRequests=0、无锁档、未熔断；随后 `desktop stop` 返回 stopped，并核对本实例管理 socket 已移除、4319 端口不再监听。日常配置和登录未修改，无需回写；日常桌面恢复后的新增生成未测试。
+
+**已通过：** 真实自动升档、超时保留原档、两条主任务完成、其他模型旁路，以及本实例 off/停止清理。**未通过：** 两条均及时获得 Jev 判断，因第一条超时。**未测试完成：** 真实 Jev 自动降档、auto 下短跟进/取消/长会话及质量与费用效果。无需为补齐成功率立即重发；下一优先级是排查已观测的发送前超时，再决定是否进行新的有界降档验收。详细复现和退出命令保留在 [桌面启动器](DESKTOP_LAUNCHER.md#jev-auto受控实验)。
+
 ### 受控桌面 Jev auto 入口（2026-09-28 14:41–14:42 +08:00）
 
 用户在 shadow 验收后明确同意推进自动改档。以源码基线 `6867006fd349c0103df07ce28c605a1b32f5c2cc` 加本节同提交的补丁验证；此前基线 [CI 36386991432](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36386991432) 成功，新提交 CI 必须另查，不能沿用。只增加桌面启动的 `--allow-jev-auto` 权限入口，复用已有控制器，不修改判断器、超时或模型传输实现。
