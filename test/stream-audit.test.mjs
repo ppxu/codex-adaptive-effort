@@ -65,4 +65,16 @@ test('evaluator calls include failed attempts with unknown usage', () => {
   const r = report([{ event: 'judge_started', judgeKind: 'typesafe' },
     { event: 'judge_finished', judgeKind: 'typesafe', judgeMs: 15, judgeInputTokens: null, reason: 'cancelled' }]);
   assert.equal(r.evaluator.externalAttempts, 1); assert.equal(r.evaluator.unknownInputUsage, 1); assert.equal(r.evaluator.observedInputTokens, null);
+  assert.deepEqual(r.evaluator.timeoutStages, {});
+});
+test('audit restricts timing to numeric milestones and fixed stage enum; old timeout logs remain unknown', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'cae-timing-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const file = join(dir, 'events.jsonl'), a = new Audit(file);
+  a.emit({ event: 'judge_finished', reason: 'judge_timeout', judgeStage: 'waiting_headers', judgeRequestSentMs: 12.5, judgeResponseHeadersMs: null });
+  a.emit({ event: 'judge_finished', reason: 'judge_timeout', judgeStage: 'PRIVATE', judgeObservedMs: 'PRIVATE', judgeSendStartMs: -1, headers: 'PRIVATE' });
+  a.close(); const text = readFileSync(file, 'utf8'); assert(!text.includes('PRIVATE'));
+  const rows = text.trim().split('\n').map(JSON.parse);
+  assert.equal(rows[0].judgeRequestSentMs, 12.5); assert.equal(rows[1].judgeObservedMs, null);
+  assert.equal(rows[1].judgeSendStartMs, null);
+  assert.deepEqual(report(rows).evaluator.timeoutStages, { waiting_headers: 1, unknown: 1 });
 });

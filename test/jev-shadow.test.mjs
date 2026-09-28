@@ -49,6 +49,8 @@ test('shadow exercises real adapter and controller, sends previewed bodies and n
   assert(fake.calls.every(c => c.url === 'https://api.typesafe.ai/v1/systemone'));
   assert(report.rows.every(r => r.unchanged && r.incomingEffort === 'medium'));
   assert(report.rows.slice(0, 8).every(r => r.proposedEffort === 'low' && r.reportedJudgeModel === 'jev-fixture'));
+  assert(report.rows.slice(0, 8).every(r => r.judgeStage === 'completed' && r.judgeSendStartMs === null));
+  assert(report.rows.slice(8).every(r => !('judgeStage' in r)));
   assert.equal(report.semanticReview, 'pending; fixture hypotheses are not accuracy labels');
 });
 test('first provider failure stops suite without retry, body echo or invented zero usage', async () => {
@@ -70,6 +72,8 @@ test('production timeout aborts pending fetch and prevents later calls', async (
     } });
   assert.equal(calls, 1); assert.equal(aborted, true); assert.equal(report.complete, false);
   assert.equal(report.rows[0].reason, 'judge_timeout');
+  assert.equal(report.rows[0].judgeStage, 'started'); // Fake fetch has no native milestones.
+  assert.equal(report.rows[0].judgeResponseHeadersMs, null);
 });
 test('cancelling an active evaluation records cancellation and stops remaining cases', async () => {
   let calls = 0; const p = plan(), abort = new AbortController();

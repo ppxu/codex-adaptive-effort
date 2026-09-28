@@ -1,4 +1,5 @@
 import { CaeError, isObject, knownNumber, checkAbort } from './util.mjs';
+import { judgeTiming } from './judge-timing.mjs';
 
 const DEPTHS = Object.freeze({
   none: 'No reasoning budget; only tasks that safely need no reasoning.',
@@ -60,17 +61,24 @@ export class TypeSafeJudge {
     if (typeof apiKey !== 'string' || !apiKey.trim()) throw new CaeError('missing_typesafe_key');
     this.apiKey = apiKey; this.model = model; this.fetch = fetchImpl;
   }
-  async evaluate({ state, model, supportedEfforts, baseline, maxLease }, { signal } = {}) {
+  async evaluate({ state, model, supportedEfforts, baseline, maxLease }, { signal, onTiming } = {}) {
     checkAbort(signal);
+    const timing = judgeTiming({ signal, onTiming });
+    try {
+      return await this.evaluateTimed({ state, model, supportedEfforts, baseline, maxLease }, signal, timing);
+    } finally { timing.stop(); }
+  }
+  async evaluateTimed({ state, model, supportedEfforts, baseline, maxLease }, signal, timing) {
     const request = judgeRequest({ state, model, supportedEfforts, baseline, maxLease }, this.model);
     let response;
     try {
-      response = await this.fetch('https://api.typesafe.ai/v1/systemone', {
+      response = await timing.run(() => this.fetch('https://api.typesafe.ai/v1/systemone', {
         method: 'POST', redirect: 'error', signal,
         headers: { authorization: `Bearer ${this.apiKey}`, 'content-type': 'application/json' },
         body: JSON.stringify(request),
-      });
+      }));
     } catch { checkAbort(signal); throw new CaeError('judge_network_error', 502); }
+    timing.mark('reading_body', 'judgeResponseHeadersMs');
     if (!response.ok) { await response.body?.cancel(); throw new CaeError(`judge_http_${response.status}`, 502); }
     const reader = response.body?.getReader();
     if (!reader) throw new CaeError('judge_empty_response', 502);
@@ -84,11 +92,14 @@ export class TypeSafeJudge {
         chunks.push(Buffer.from(value));
       }
     } finally { reader.releaseLock(); }
+    timing.mark('validating', 'judgeResponseBodyMs');
     let data;
     try { data = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
     catch { throw new CaeError('judge_invalid_json', 502); }
-    return { ...parseAnswers(data, supportedEfforts, maxLease),
+    const result = { ...parseAnswers(data, supportedEfforts, maxLease),
       judgeModel: typeof data?.model === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(data.model) ? data.model : null,
       judgeOutputTokens: knownNumber(data?.usage?.output_tokens) };
+    timing.mark('completed', 'judgeValidatedMs');
+    return result;
   }
 }

@@ -5,6 +5,9 @@ const FIELDS = new Set(['event', 'requestId', 'model', 'mode', 'effort', 'source
   'proposedEffort', 'incomingEffort', 'changed', 'lease', 'confidence', 'judgeMs', 'judgeInputTokens',
   'judgeKind', 'stateChars', 'httpStatus', 'terminal', 'inputTokens', 'cachedInputTokens', 'outputTokens',
   'reasoningTokens', 'durationMs', 'completed']);
+const TIMING_FIELDS = ['judgeRequestCreatedMs', 'judgeSendStartMs', 'judgeRequestSentMs',
+  'judgeResponseHeadersMs', 'judgeResponseBodyMs', 'judgeValidatedMs', 'judgeObservedMs'];
+const TIMING_STAGES = new Set(['started', 'created', 'sending', 'waiting_headers', 'reading_body', 'validating', 'completed']);
 export class Audit {
   constructor(path) {
     this.failed = false;
@@ -16,6 +19,8 @@ export class Audit {
   emit(record) {
     const clean = { schema: 1, time: new Date().toISOString() };
     for (const [key, value] of Object.entries(record)) {
+      if (TIMING_FIELDS.includes(key)) { clean[key] = knownNumber(value); continue; }
+      if (key === 'judgeStage') { if (TIMING_STAGES.has(value)) clean[key] = value; continue; }
       if (!FIELDS.has(key)) continue;
       if (value === null || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) clean[key] = value;
       else if (typeof value === 'string' && value.length < 200) clean[key] = value;
@@ -57,5 +62,10 @@ export function report(records) {
     observedDurationMs: judgeOutcomes.reduce((n, r) => n + (knownNumber(r.judgeMs) ?? 0), 0),
     note: 'Cancelled/timed-out evaluator calls may be billable even when usage is unknown. No dollar estimate.'
   };
+  summary.evaluator.timeoutStages = {};
+  for (const row of judgeOutcomes.filter(r => r.reason === 'judge_timeout')) {
+    const stage = TIMING_STAGES.has(row.judgeStage) ? row.judgeStage : 'unknown';
+    summary.evaluator.timeoutStages[stage] = (summary.evaluator.timeoutStages[stage] ?? 0) + 1;
+  }
   return summary;
 }

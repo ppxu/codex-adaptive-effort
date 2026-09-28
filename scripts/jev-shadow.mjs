@@ -40,9 +40,10 @@ export async function runShadow(plan, { enabled = false, approvedPlan, apiKey, s
   if (plan.model === 'synthetic-model') throw new CaeError('synthetic_model_refused');
   checkAbort(signal);
   const judge = new TypeSafeJudge({ apiKey, fetchImpl });
-  let lastAnswer;
+  let lastAnswer, lastTiming;
   const controller = new Controller(plan.config, { async evaluate(input, options) {
-    lastAnswer = await judge.evaluate(input, options); return lastAnswer;
+    lastAnswer = await judge.evaluate(input, { ...options,
+      onTiming: data => { lastTiming = data; options.onTiming?.(data); } }); return lastAnswer;
   } });
   const report = { schema: 1, startedAt: new Date().toISOString(), planHash: plan.planHash,
     mode: 'shadow', executorCalls: 0, requestedJudgeModel: plan.config.judge.model,
@@ -50,7 +51,7 @@ export async function runShadow(plan, { enabled = false, approvedPlan, apiKey, s
     capabilityObservedAt: plan.capabilityObservedAt, timeoutMs: plan.timeoutMs,
     maxCalls: plan.maxCalls, retries: 0, complete: false, rows: [] };
   for (const item of plan.preparedCases) {
-    lastAnswer = null;
+    lastAnswer = null; lastTiming = null;
     let tx;
     try {
       checkAbort(signal);
@@ -58,7 +59,7 @@ export async function runShadow(plan, { enabled = false, approvedPlan, apiKey, s
       tx = await controller.prepare(item.body, { sessionKey: item.id, signal });
       const unchanged = !tx.changed && JSON.stringify(tx.body) === before && JSON.stringify(item.body) === before;
       const valid = unchanged && (item.bypass ? tx.source === 'bypass' && tx.reason === item.bypass : tx.source === 'judge');
-      report.rows.push({ id: item.id, source: tx.source, reason: tx.reason, unchanged,
+      report.rows.push({ id: item.id, source: tx.source, reason: tx.reason, unchanged, ...lastTiming,
         incomingEffort: plan.baseline, proposedEffort: tx.effort, lease: tx.lease,
         confidence: tx.confidence ?? null, judgeMs: tx.judgeMs ?? null,
         judgeInputTokens: tx.judgeInputTokens ?? null, judgeOutputTokens: lastAnswer?.judgeOutputTokens ?? null,

@@ -24,6 +24,43 @@
 
 原始证据仅留 `.cae/desktop/events.jsonl`，不提交。本节公开内容不含原始请求标识、私有路径、账号或任务正文。
 
+## 超时诊断准备（2026-09-28）
+
+在基线 `6ef08cfcefce741794b71149d88db5909ed80d5d` 上增加阶段观测。`npm run verify`：195 项测试通过，0 失败/取消/跳过；32 模块语法、JSON 检查和离线演示通过。本轮未新增真实 Jev/GPT 调用，没有改动 1500 ms 超时、调用上限、请求内容、重试行为或桌面实例。此前两次失败原样保留，根因仍未判明。
+
+实现使用原生 fetch 的 [Undici diagnostics_channel](https://github.com/nodejs/undici/blob/main/docs/docs/api/DiagnosticsChannel.md)，不替换 dispatcher、连接池或 HTTP 实现。按异步调用上下文和 request 对象身份关联，每次完成或取消立即移除订阅；并发请求不共享计时，缺少诊断事件记 null。所有字段仅含固定阶段名和单调时钟读数，不采集 URL、主机/IP、认证头、响应正文或任务文本。
+
+`judge_finished` 新增以下**自本次评估开始的累计毫秒数**，不能直接相加：
+
+| 字段 | 含义 |
+|---|---|
+| judgeRequestCreatedMs | fetch 创建原生请求 |
+| judgeSendStartMs | 即将向 socket 写请求头；此前包含本地准备、排队和可能的 DNS/TCP/TLS |
+| judgeRequestSentMs | 请求体写完；不表示服务端已处理 |
+| judgeResponseHeadersMs | 响应头已收到；不是精确的网络首字节时刻 |
+| judgeResponseBodyMs | 正文读取完成 |
+| judgeValidatedMs | JSON 和决策契约校验通过 |
+| judgeObservedMs | 最终观察时间，包括超时/取消截断时刻 |
+
+`judgeStage` 是最后观测到的阶段：started / created / sending / waiting_headers / reading_body / validating / completed。若超时且为 waiting_headers，说明请求体已发完，但响应头尚未观测到；`judgeObservedMs - judgeRequestSentMs` 是已等待的时长，不能直接称为服务端推理耗时。若为 reading_body，则响应头已到但正文未读完；created/sending 只能定位为更早阶段，不能单独归因 DNS、TCP 或 TLS。连接复用时这些底层步骤可能根本未发生，本版不编造分段数字。SDK 诊断接口变化时允许字段缺失，不为获取诊断而改变请求行为。
+
+离线回归实际使用本地 HTTP 服务验证并发请求隔离、无关 fetch 排除、响应头延迟与正文延迟的区别、超时回退不改请求、取消即时退订/迟到事件忽略、HTTP/JSON 错误阶段、诊断回调失败不影响执行、日志字段过滤。独立合成样例运行器也会把同样字段写入本机结果；其冻结 payload 与指纹不变。
+
+现有桌面进程不热替换代码。准备下一次采样时，先确认无活动任务，停止旧实验实例，再用原命令显式启用新实例：
+
+```bash
+node bin/cae.mjs desktop status
+node bin/cae.mjs desktop stop
+node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt \
+  --enable-upstream --enable-jev
+```
+
+重启会产生新进程的最多 8 次上限，不自动运行历史样例，也不把它当成原批次余额。仅在明确开展下一次真实采样时发送合成任务。建议先只发一条“不要使用任何工具。把字符串 Helo 改成 Hello，只回复修改后的字符串。”，等待完成后核对本次启动时间之后的 `judge_finished`。`report` 的 `evaluator.timeoutStages` 会汇总超时阶段，旧日志没有阶段时记 unknown，不给旧失败补造时间。
+
+此步骤仍处于 shadow；无论判断成功与否，核对 changed=false 和主请求完成。出现超时保留原记录，不自动延长超时或重跑。结束时 `desktop stop`；无需恢复全局配置。当前新增计时只有离线证据，下一次真实结果采集前不能据此断言 Jev 服务端或本地网络有问题。
+
+补丁完成时再次查询原实例，返回 desktop_not_running_or_stale_socket；只读检查确认管理 socket 不存在、4319 没有监听。本轮未执行停止或清理，不据此声称所有原生子进程都已清理。已无该服务时可直接执行 start，无需重复 stop。
+
 ## 真实运行结果（2026-09-28 13:46:48–13:46:52 +08:00）
 
 被测源码：`6763d15e5d63e6d8fb7149aa8bf55c92ea2ccab7`。对应 [CI run 36383209347](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36383209347) 已通过 Ubuntu/macOS/Windows × Node 22/24 六项组合；本机 181 项离线测试结果沿用同一源码提交的前次运行。以下新增的真实结果不能由 CI 替代。

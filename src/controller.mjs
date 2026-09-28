@@ -66,6 +66,8 @@ export class Controller {
           this.sessions.delete(owner);
           const started = this.now();
           let attempted = false;
+          let timing = {};
+          let timingOpen = true;
           const judgeAbort = new AbortController();
           const abort = () => judgeAbort.abort();
           signal?.addEventListener('abort', abort, { once: true });
@@ -77,7 +79,7 @@ export class Controller {
             result = await bounded(this.judge.evaluate({
               state: snapshot.state, model: body.model, supportedEfforts: this.config.supportedEfforts,
               baseline: this.config.baseline, maxLease: this.config.lease.maxGenerations,
-            }, { signal: judgeAbort.signal }), this.config.judge.timeoutMs, signal);
+            }, { signal: judgeAbort.signal, onTiming: value => { if (timingOpen) timing = value; } }), this.config.judge.timeoutMs, signal);
             if (!isObject(result) || !this.config.supportedEfforts.includes(result.effort) || !Number.isInteger(result.lease) || result.lease < 1 || result.lease > this.config.lease.maxGenerations)
               throw new CaeError('judge_invalid_decision');
             this.failures = 0; this.circuitUntil = 0; tx.source = 'judge';
@@ -93,9 +95,11 @@ export class Controller {
             tx.source = 'fallback'; tx.reason = err.code;
           } finally {
             judgeAbort.abort(); signal?.removeEventListener('abort', abort);
+            timingOpen = false;
             tx.judgeMs = Math.max(0, this.now() - started);
             if (attempted) this.emit({ event: 'judge_finished', requestId: id, model: body.model,
               judgeKind: this.config.judge.kind, judgeMs: tx.judgeMs,
+              ...timing,
               judgeInputTokens: result?.judgeInputTokens ?? null,
               reason: signal?.aborted ? 'cancelled' : tx.reason });
           }
