@@ -163,7 +163,7 @@ node bin/cae.mjs report --config .cae/desktop/config.json
 node bin/cae.mjs desktop stop
 ```
 
-off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 已验证 medium → high 且正常完成；另一条 Jev 超时，回退 medium 并完成，自动降档尚未实测通过。本实例 off → stop 清理通过，详见 [本机记录](LOCAL_ACCEPTANCE.md)。
+off 仍经过代理，stop 后按日常方式使用官方桌面，无需恢复全局配置。首轮真实 auto 已验证 medium → high 且正常完成；另一条 Jev 超时，回退 medium 并完成，后续 2000 ms 实验中 medium → low 也已完成。两次实例的 off → stop 清理均通过，详见 [本机记录](LOCAL_ACCEPTANCE.md)。
 
 ### 可选 2000 ms 实验
 
@@ -179,7 +179,7 @@ node bin/cae.mjs control auto --config .cae/desktop/config.json
 
 先只在独立无敏感目录的新本地会话发送上面的拼写任务，固定主模型和客户端 medium。核对 Jev 建议、sent effort、changed 和 completed；若成功降到 low，记为真实降档通过。若建议 medium、超时或旁路，如实记录，不自动重发。同一个成功样例不能证明 2000 ms 优于 1500 ms；不同批次的连接与上下文可能不同，若返回时间仍小于 1500 ms，也不能把成功归功于放宽超时。
 
-检查后 off/stop，命令同上。去掉超时参数重新启动，恢复原有磁盘值与 1500 ms 上限；无需回写配置。2000 ms 的真实改善和自动降档尚待采样，最坏超时等待比默认增加约 500 ms。
+检查后 off/stop，命令同上。去掉超时参数重新启动，恢复原有磁盘值与 1500 ms 上限；无需回写配置。真实样例以 665 ms 完成 medium → low，自动降档通过；耗时低于原 1500 ms，因此放宽上限的改善效果仍未知。最坏超时等待比默认增加约 500 ms。
 
 ## 检查和失败行为
 

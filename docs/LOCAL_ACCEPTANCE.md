@@ -202,6 +202,22 @@ node "$CAE_ROOT/bin/cae.mjs" unlock --config "$CAE_TRIAL/.cae/config.json"
 
 ## 交付边界
 
+### 真实自动降档通过（2026-09-28 14:58:35–14:58:43 +08:00）
+
+被测源码 `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674`，[对应 CI 36389005837](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36389005837) 成功。沿用下节 14:54 的 199 项离线测试、真实能力探针及相同本机环境。本轮只更新文档，没有修改运行代码、默认配置或追加模型调用。
+
+用户完成计划中的单条无工具拼写样例。按本次窗口的 requestId 在本地关联 CAE 元数据：主模型 `gpt-6-astra`、mode=auto、无锁档、来请求 medium；Jev 在 **665 ms** 返回 low（source=judge、lease=1、confidence=0.96），decision 为 changed=true，request_prepared 和 request_sent 均为 **low**。随后 HTTP 200、response.completed。此次真实 medium → low 自动降档通过；结合前一批的 medium → high 与超时回退，限定桌面版本上的基本自动改档传输链路已经覆盖。
+
+实际判断超时上限为 2000 ms，但本次返回只需 665 ms，也低于原先 1500 ms。不能把成功归因于放宽超时，不能推导稳定性改善、任务质量或费用收益；此前超时原因仍未知。不同批次的上下文和连接条件未控制，不是严格 A/B 对照。默认继续保留 1500 ms，2000 ms 仅保留为显式实验选项。
+
+累计阶段值：created 5.0 ms、sendStart 348.6 ms、bodySent 352.2 ms、headers 653.5 ms、body 663.8 ms、validated 664.2 ms；发完到响应头为 301.3 ms，不能视为纯服务端推理时间。已知 Jev 输入为 1694 token，输出用量和响应模型版本未采集，保持未知。
+
+另外一条客户端 `gpt-6-luna` / low 请求按 different_model 原样旁路并完成，无 Jev 调用；未读取正文，不断言用途。合计 1 次 Jev 判断、2 次上游成功完成、1 次改档，无超时或重试。
+
+14:59:03 切回 off，确认 judgeCalls=1/8、activeRequests=0、lockedEffort=null、未熔断；随后 desktop stop 返回 stopped，管理 socket 已移除，4319 不再监听。磁盘仍为 shadow / baseline / 1500 ms；日常配置、登录、审批和沙箱没有修改。
+
+**已通过：** 本次真实自动降档、2000 ms 参数实际生效、本实例 off/退出清理，以及此前真实升档和超时回退。**仍未确定：** 放宽至 2000 ms 是否减少超时、发送前超时根因、日常稳定性、质量和成本收益。**未测试：** auto 下的真实取消/短跟进/长会话、其他平台或版本。无需再追加成功样例；当前可在已验证环境、无敏感任务上有界试用，不能扩展为生产兼容承诺。复现及恢复命令见 [启动器说明](DESKTOP_LAUNCHER.md#可选-2000-ms-实验)。
+
 ### 2000 ms 进程级实验准备（2026-09-28 14:54–14:56 +08:00）
 
 用户同意继续验证 2000 ms 与真实自动降档。被测源码为 `b60d71f37270bc739fc833dffb37414a80530ad9` 加本节同提交的源码补丁；该基线 CI 已成功，新提交 CI 单独核验。新增 `desktop start --enable-jev --jev-timeout-ms 1500|2000`，仅覆盖当前进程超时、不写配置；未指定参数时继续取磁盘值与 1500 ms 的较小值。保留最多 8 次判断、更小调用预算、不重试和错误回退，状态接口新增实际生效的 judgeTimeoutMs。未改变网络实现或超时阶段观测。
