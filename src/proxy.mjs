@@ -56,7 +56,7 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
   if (c.upstream.kind !== 'mock' && !allowUpstream) throw new CaeError('upstream_not_enabled');
   const controller = new Controller(c, judge, { emit, shadowOnly });
   const sessionSalt = randomBytes(32);
-  const aborters = new Set(); let port; let inflight = 0;
+  const aborters = new Set(); let port; let inflight = 0, controls = 0;
   const server = http.createServer(async (req, res) => {
     const aborter = new AbortController(); aborters.add(aborter);
     const close = () => { if (!res.writableFinished) aborter.abort(); };
@@ -69,11 +69,14 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
         throw new CaeError('browser_requests_forbidden', 403);
       if (![`127.0.0.1:${port}`, `localhost:${port}`].includes(req.headers.host)) throw new CaeError('invalid_host', 403);
       if (!equalSecret(req.headers['x-cae-token'], token)) throw new CaeError('local_auth_required', 401);
-      if (inflight >= 64) throw new CaeError('too_many_requests', 429);
-      ++inflight;
+      if (!req.url.startsWith('/') || req.url.startsWith('//')) throw new CaeError('invalid_path', 404);
+      const url = new URL(req.url, 'http://127.0.0.1');
+      // Long-running generations must not consume the slots needed to turn off
+      // adaptation or inspect health. Control requests have their own small cap.
+      const local = ['/health', '/control'].includes(url.pathname);
+      if (local ? controls >= 8 : inflight >= 64) throw new CaeError('too_many_requests', 429);
+      if (local) ++controls; else ++inflight;
       try {
-        if (!req.url.startsWith('/') || req.url.startsWith('//')) throw new CaeError('invalid_path', 404);
-        const url = new URL(req.url, 'http://127.0.0.1');
         if (url.pathname === '/health' && req.method === 'GET') { json(res, 200, { ok: true, auditHealthy: auditHealthy() === true, ...controller.status() }); return; }
         if (url.pathname === '/control') {
           if (req.method === 'GET') { json(res, 200, controller.status()); return; }
@@ -107,7 +110,7 @@ export async function startProxy(config, { token, judge, emit = () => {}, allowU
         checkAbort(aborter.signal);
         outcome = await relay(new URL(upstreamBase(c) + path + url.search), req, res, bytes,
           aborter.signal, c.upstreamTimeoutMs, () => { if (tx) controller.markSent(tx); }, expectsSse);
-      } finally { --inflight; }
+      } finally { if (local) --controls; else --inflight; }
     } catch (error) {
       const safe = error instanceof CaeError ? error : new CaeError('proxy_transport_error', 502);
       if (!res.headersSent && !res.destroyed) json(res, safe.status, { error: { type: 'cae_error', code: safe.code } });

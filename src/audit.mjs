@@ -1,4 +1,5 @@
-import { openSync, writeSync, closeSync, constants, fchmodSync } from 'node:fs';
+import { openSync, writeSync, closeSync, constants, fchmodSync, createReadStream } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { CaeError, knownNumber, isObject } from './util.mjs';
 
 const FIELDS = new Set(['event', 'requestId', 'model', 'mode', 'effort', 'source', 'reason', 'revision',
@@ -35,37 +36,78 @@ export function usageOf(response) {
   return { inputTokens: knownNumber(u?.input_tokens), cachedInputTokens: knownNumber(u?.input_tokens_details?.cached_tokens),
     outputTokens: knownNumber(u?.output_tokens), reasoningTokens: knownNumber(u?.output_tokens_details?.reasoning_tokens) };
 }
-export function report(records) {
-  records = records.filter(isObject);
-  const outcomes = records.filter(r => r.event === 'upstream_outcome');
-  const decisions = records.filter(r => r.event === 'decision');
+function reportAccumulator() {
+  const tokenFields = ['inputTokens', 'cachedInputTokens', 'outputTokens', 'reasoningTokens'];
+  let judgeOutcomes = 0, knownJudgeUsage = 0;
   const summary = {
-    decisions: decisions.length, requests: outcomes.length,
-    completed: outcomes.filter(r => r.completed).length,
-    changedRequests: records.filter(r => r.event === 'request_sent' && r.changed).length,
+    decisions: 0, requests: 0, completed: 0, changedRequests: 0,
     sources: {}, tokenObservations: {}, measuredSavings: null,
     note: 'Observed usage only. Reasoning tokens are a subset of output tokens; do not add them again. Missing is not zero. Shadow traffic still uses the original effort. No counterfactual or quality equivalence is established.',
   };
-  for (const r of decisions) summary.sources[r.source] = (summary.sources[r.source] ?? 0) + 1;
-  for (const key of ['inputTokens', 'cachedInputTokens', 'outputTokens', 'reasoningTokens']) {
-    const values = outcomes.map(r => knownNumber(r[key])).filter(v => v !== null);
-    summary.tokenObservations[key] = { observedSum: values.length ? values.reduce((a, b) => a + b, 0) : null,
-      knownRequests: values.length, unknownRequests: outcomes.length - values.length };
-  }
-  const judgeOutcomes = records.filter(r => r.event === 'judge_finished');
-  const knownJudgeUsage = judgeOutcomes.map(r => knownNumber(r.judgeInputTokens)).filter(v => v !== null);
+  for (const key of tokenFields) summary.tokenObservations[key] = { observedSum: null, knownRequests: 0, unknownRequests: 0 };
   summary.evaluator = {
-    attempts: records.filter(r => r.event === 'judge_started').length,
-    externalAttempts: records.filter(r => r.event === 'judge_started' && r.judgeKind === 'typesafe').length,
-    observedInputTokens: knownJudgeUsage.length ? knownJudgeUsage.reduce((a, b) => a + b, 0) : null,
-    unknownInputUsage: judgeOutcomes.length - knownJudgeUsage.length,
-    observedDurationMs: judgeOutcomes.reduce((n, r) => n + (knownNumber(r.judgeMs) ?? 0), 0),
-    note: 'Cancelled/timed-out evaluator calls may be billable even when usage is unknown. No dollar estimate.'
+    attempts: 0, externalAttempts: 0, observedInputTokens: null, unknownInputUsage: 0, observedDurationMs: 0,
+    note: 'Cancelled/timed-out evaluator calls may be billable even when usage is unknown. No dollar estimate.',
+    timeoutStages: {},
   };
-  summary.evaluator.timeoutStages = {};
-  for (const row of judgeOutcomes.filter(r => r.reason === 'judge_timeout')) {
-    const stage = TIMING_STAGES.has(row.judgeStage) ? row.judgeStage : 'unknown';
-    summary.evaluator.timeoutStages[stage] = (summary.evaluator.timeoutStages[stage] ?? 0) + 1;
-  }
-  return summary;
+  return {
+    add(r) {
+      if (!isObject(r)) return;
+      if (r.event === 'decision') {
+        ++summary.decisions;
+        const source = ['bypass', 'manual', 'lease', 'judge', 'fallback'].includes(r.source) ? r.source : 'unknown';
+        summary.sources[source] = (summary.sources[source] ?? 0) + 1;
+      }
+      if (r.event === 'request_sent' && r.changed === true) ++summary.changedRequests;
+      if (r.event === 'upstream_outcome') {
+        ++summary.requests;
+        if (r.completed === true) ++summary.completed;
+        for (const key of tokenFields) {
+          const value = knownNumber(r[key]), observation = summary.tokenObservations[key];
+          if (value === null) ++observation.unknownRequests;
+          else { ++observation.knownRequests; observation.observedSum = (observation.observedSum ?? 0) + value; }
+        }
+      }
+      const evaluator = summary.evaluator;
+      if (r.event === 'judge_started') {
+        ++evaluator.attempts;
+        if (r.judgeKind === 'typesafe') ++evaluator.externalAttempts;
+      }
+      if (r.event === 'judge_finished') {
+        ++judgeOutcomes;
+        const usage = knownNumber(r.judgeInputTokens);
+        if (usage !== null) { ++knownJudgeUsage; evaluator.observedInputTokens = (evaluator.observedInputTokens ?? 0) + usage; }
+        evaluator.observedDurationMs += knownNumber(r.judgeMs) ?? 0;
+        if (r.reason === 'judge_timeout') {
+          const stage = TIMING_STAGES.has(r.judgeStage) ? r.judgeStage : 'unknown';
+          evaluator.timeoutStages[stage] = (evaluator.timeoutStages[stage] ?? 0) + 1;
+        }
+      }
+    },
+    finish() {
+      // A crash can leave a started attempt without a finish record. Do not
+      // silently erase its unknown usage; old finish-only captures still work.
+      summary.evaluator.unknownInputUsage = Math.max(summary.evaluator.attempts, judgeOutcomes) - knownJudgeUsage;
+      return summary;
+    },
+  };
+}
+export function report(records) {
+  const accumulator = reportAccumulator();
+  for (const row of records) accumulator.add(row);
+  return accumulator.finish();
+}
+/** Fold the log incrementally instead of retaining every line and parsed record. */
+export async function reportFile(path) {
+  const source = createReadStream(path, { encoding: 'utf8' });
+  const lines = createInterface({ input: source, crlfDelay: Infinity });
+  const accumulator = reportAccumulator(); let malformedLines = 0;
+  try {
+    for await (const line of lines) {
+      if (!line) continue;
+      try { accumulator.add(JSON.parse(line)); } catch { ++malformedLines; }
+    }
+  } catch { throw new CaeError('cannot_read_log'); }
+  finally { lines.close(); source.destroy(); }
+  return { ...accumulator.finish(), malformedLines };
 }

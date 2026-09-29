@@ -8,9 +8,11 @@
 
 Codex Adaptive Effort (CAE) is an experimental local HTTP/SSE proxy that can change `reasoning.effort` for a fixed, user-selected model. It supports the Codex CLI and an isolated instance of the validated Codex desktop application. An optional TypeSafe Jev evaluator recommends effort levels from the model's actual capabilities.
 
-[简体中文](README.zh-CN.md) · [Documentation](docs/README.md) · [Acceptance evidence](docs/LOCAL_ACCEPTANCE.md) · [Changelog](CHANGELOG.md)
+[简体中文](README.zh-CN.md) · [Documentation](docs/README.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Acceptance evidence](docs/LOCAL_ACCEPTANCE.md) · [Changelog](CHANGELOG.md)
 
-> **Alpha: `0.1.0-alpha.1`.** This is an independent project, not an official OpenAI or TypeSafe plugin. Desktop support is limited to the exact macOS/app/CLI combination documented below. Task quality, cost savings and production reliability are not established.
+> **Beta: `0.1.0-beta.1`.** This is an independent project, not an official OpenAI or TypeSafe plugin. Desktop support is limited to the exact macOS/app/CLI combination documented below. Task quality, cost savings and production reliability are not established.
+
+This beta includes the [runtime, reporting and installation fixes](docs/CODE_REVIEW_2026-09-29.md). It is an opt-in prerelease with the same native compatibility boundaries. See the [release notes and publication receipt](https://github.com/ppxu/codex-adaptive-effort/releases/tag/v0.1.0-beta.1).
 
 ## What it does
 
@@ -29,15 +31,15 @@ The default evaluator is **baseline-only**, a transport test fixture rather than
 
 ## Install and run
 
-Requires Node.js **22.16+**, npm and an existing Codex installation for native integration. There are no third-party runtime dependencies or install hooks. Install the published [npm alpha](https://www.npmjs.com/package/codex-adaptive-effort):
+Requires Node.js **22.16+**, npm and an existing Codex installation for native integration. There are no third-party runtime dependencies or install hooks. Install the [npm beta](https://www.npmjs.com/package/codex-adaptive-effort):
 
 ```bash
-npm install --global --ignore-scripts codex-adaptive-effort@alpha
+npm install --global --ignore-scripts codex-adaptive-effort@beta
 cae --version
 cae --help
 ```
 
-The first published version is `0.1.0-alpha.1`. See the [npm guide](docs/NPM.md) for pinned versions, Git commits, local archives, upgrades, uninstalling and configuration locations. Global installation provides the command; configuration stays in your chosen working directory.
+To pin this release, use `codex-adaptive-effort@0.1.0-beta.1`. Use the explicit `beta` tag; publishing a beta does not promote `latest`. See the [npm guide](docs/NPM.md) for Git commits, local archives, upgrades, uninstalling and configuration locations. Global installation provides the command; configuration stays in your chosen working directory.
 
 For source development:
 
@@ -50,7 +52,7 @@ npm link --ignore-scripts
 cae --help
 ```
 
-Verification uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24. Passing CI does not imply native integration on all these platforms.
+Verification checks public documentation links and uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24, plus Linux on the minimum Node 22.16.0. Passing CI does not imply native integration on all these platforms.
 
 ## Quick start: inspect capabilities
 

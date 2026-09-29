@@ -5,17 +5,21 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { checkDocumentation } from '../scripts/docs.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
 test('npm manifest has a complete explicit runtime allowlist and no lifecycle hooks or dependencies', () => {
-  assert.notEqual(pkg.private, true); assert.equal(pkg.publishConfig.tag, 'alpha');
+  assert.notEqual(pkg.private, true); assert.equal(pkg.publishConfig.tag, 'beta');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.bin.cae, './bin/cae.mjs');
   for (const file of readdirSync(join(root, 'bin')).filter(f => f.endsWith('.mjs')))
     assert(!readFileSync(join(root, 'bin', file), 'utf8').split('\n')[0].includes('\r'), `Executable shebang must use LF: ${file}`);
-  for (const file of pkg.files) assert.match(file, /^(?:bin|src|docs)\/[A-Za-z0-9_.-]+$|^[A-Za-z0-9_.-]+$/);
+  for (const file of pkg.files) {
+    assert.match(file, /^(?:(?:bin|src|docs|examples)\/(?:[A-Za-z0-9_-]+\/)*)?[A-Za-z0-9_.-]+$/);
+    assert(!file.split('/').some(part => ['.', '..'].includes(part)));
+  }
   for (const dir of ['bin', 'src']) for (const file of readdirSync(join(root, dir)).filter(f => f.endsWith('.mjs')))
     assert(pkg.files.includes(`${dir}/${file}`), `Runtime file missing from npm package: ${dir}/${file}`);
   for (const hook of ['preinstall', 'install', 'postinstall', 'prepare', 'prepack', 'postpack', 'prepublish', 'prepublishOnly', 'publish', 'postpublish'])
@@ -64,6 +68,7 @@ test('packed tarball excludes private files and installs a working global cae co
     const bytes = readFileSync(join(installed, file));
     assert(!bytes.includes(sentinel)); assert.deepEqual(bytes, readFileSync(join(source, file)));
   }
+  checkDocumentation(installed, expected);
   const shim = join(prefix, process.platform === 'win32' ? 'cae.cmd' : 'bin/cae');
   assert(existsSync(shim));
   // Only fixed flags reach the Windows command shim; no user-controlled shell arguments.

@@ -6,6 +6,19 @@ import { harness, body, append, fakeJudge, completedSse, eventually, sleep, conf
 import { startProxy, forwardedHeaders } from '../src/proxy.mjs';
 
 async function consume(res) { return Buffer.from(await res.arrayBuffer()); }
+test('status and off controls remain available when all forwarding slots are occupied', { timeout: 10000 }, async t => {
+  const h = await harness(t, { cfg: { mode: 'off' }, handler: (_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/event-stream' }); res.write(': waiting\n\n');
+  } });
+  const responses = await Promise.all(Array.from({ length: 64 }, (_, i) =>
+    h.request(body(), { headers: { session_id: `synthetic-${i}` } })));
+  t.after(() => Promise.all(responses.map(r => r.body.cancel().catch(() => {}))));
+  const rejected = await h.request(); assert.equal(rejected.status, 429); await rejected.text();
+  const health = await fetch(h.base + '/health', { headers: h.headers });
+  assert.equal(health.status, 200); assert.equal((await health.json()).activeRequests, 64);
+  const control = await fetch(h.base + '/control', { method: 'POST', headers: h.headers, body: '{"mode":"off"}' });
+  assert.equal(control.status, 200); assert.equal((await control.json()).mode, 'off');
+});
 test('shadow-only HTTP proxy preserves request and SSE bytes after rejecting an auto control', async t => {
   const h = await harness(t, { cfg: { mode: 'shadow' }, shadowOnly: true });
   const rejected = await fetch(h.base + '/control', { method: 'POST', headers: h.headers, body: JSON.stringify({ mode: 'auto' }) });
@@ -26,6 +39,17 @@ test('real loopback auto request changes effort only; SSE bytes are identical', 
   await eventually(() => h.events.some(e => e.event === 'upstream_outcome'));
   const out = h.events.find(e => e.event === 'upstream_outcome'); assert.equal(out.inputTokens, 100); assert.equal(out.reasoningTokens, 8);
   assert.equal(out.completed, true); assert.equal(h.records.length, 1);
+});
+for (const ending of ['\r', '\n', '\r\n']) test(`SSE ${JSON.stringify(ending)} metadata parsing preserves upstream BOM and bytes`, async t => {
+  const bytes = Buffer.from('\uFEFF' + completedSse().toString('utf8').replaceAll('\r\n', ending));
+  const h = await harness(t, { handler: (_req, res) => {
+    res.writeHead(200, { 'content-type': 'Text/Event-Stream; charset=utf-8' });
+    for (let i = 0; i < bytes.length; i += 7) res.write(bytes.subarray(i, i + 7));
+    res.end();
+  } });
+  assert.deepEqual(await consume(await h.request()), bytes);
+  await eventually(() => h.proxy.controller.active.size === 0);
+  assert.equal(h.events.at(-1).completed, true); assert.equal(h.events.at(-1).outputTokens, 20);
 });
 test('stream request observes headerless SSE without changing bytes or response headers', async t => {
   const h = await harness(t, { handler: (_req, res) => {

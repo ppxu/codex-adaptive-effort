@@ -1,6 +1,6 @@
 # Security and data boundaries
 
-This is alpha software, not a sandbox or a security certification. Do not use confidential or production workloads before an independent review and provider approval.
+This is beta software, not a sandbox or a security certification. Do not use confidential or production workloads before an independent review and provider approval.
 
 ## Trust model
 
@@ -14,13 +14,15 @@ Task text and tool output can contain business secrets not recognized by redacti
 
 No automatic upstream retries or redirect following. Generated launcher configuration disables Codex provider retries, but other clients may retry themselves. Requests have body/time limits; concurrent requests in one recognized session receive 409. Separate sessions can run concurrently. Cancellation propagates to the network where possible; it does not prove the remote service stopped billing.
 
-Metadata-only audit files are 0600 on POSIX. Only explicitly allowlisted fields are written; request bodies and provider error bodies are not logged. `status` includes `auditHealthy`; a logging failure does not break the model stream. There is no log rotation in this alpha. Windows ACL and cross-user confidentiality require local validation; POSIX modes are not Windows ACL guarantees.
+Metadata-only audit files are 0600 on POSIX. Only explicitly allowlisted fields are written; request bodies and provider error bodies are not logged. `status` includes `auditHealthy`; a logging failure does not break the model stream. There is no log rotation in this beta. Windows ACL and cross-user confidentiality require local validation; POSIX modes are not Windows ACL guarantees.
+
+Forwarding saturation does not consume the separate authenticated health/control slots. Audit reports process logs incrementally; malformed lines are counted, and evaluator attempts without a finish record retain unknown usage. These controls and reporting fixes are included in `0.1.0-beta.1`.
 
 Some unsupported histories bypass adaptation but still go to the original executor. `off` is not network isolation and still uses the proxy. If the proxy crashes, end the experimental session and relaunch ordinary Codex; there is no background config rewrite or automatic direct-routing promise.
 
 ## Supported versions
 
-Security fixes are considered for the current main branch of this alpha. There is no long-term support commitment for older snapshots. Include the exact source commit and native client version when reporting a problem.
+Security fixes are considered for the current main branch and latest beta. There is no long-term support commitment for older snapshots. Include the exact source commit and native client version when reporting a problem.
 
 ## Reporting a vulnerability
 

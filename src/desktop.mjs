@@ -13,6 +13,7 @@ import { codexArgs, probeModels, nativeEnvironment } from './codex.mjs';
 import { startProxy } from './proxy.mjs';
 import { BaselineJudge, TypeSafeJudge } from './judge.mjs';
 import { Audit } from './audit.mjs';
+import { VERSION } from './version.mjs';
 
 const run = promisify(execFile);
 const pause = ms => new Promise(r => setTimeout(r, ms));
@@ -89,12 +90,13 @@ export async function verifyDesktopProvider(binary, args, config, { timeoutMs = 
       if (c?.model_provider !== 'cae' || c.model !== config.model || c.model_reasoning_effort !== config.baseline ||
           provider?.base_url !== `http://127.0.0.1:${config.port}/v1` || provider?.wire_api !== 'responses' ||
           provider?.requires_openai_auth !== true || provider?.supports_websockets !== false ||
+          provider?.request_max_retries !== 0 || provider?.stream_max_retries !== 0 ||
           provider?.env_http_headers?.['x-cae-token'] !== 'CAE_LOCAL_TOKEN' || provider?.env_key != null || provider?.experimental_bearer_token != null) {
         finish(new CaeError('desktop_effective_provider_mismatch')); return;
       }
       finish(null, { provider: 'cae', model: c.model, effort: c.model_reasoning_effort });
     });
-    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'cae_desktop_preflight', version: '0.1.0' } } });
+    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'cae_desktop_preflight', version: VERSION } } });
   });
 }
 

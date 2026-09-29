@@ -10,10 +10,10 @@ The experimental instance uses its own Electron data directory but shares native
 
 ## Start with baseline shadow
 
-After [npm installation](NPM.md), replace `node bin/cae.mjs` in this guide with `cae` and use your chosen working directory in every terminal. When running from source, use the repository root. Select a model ID returned by the [native probe](LOCAL_VALIDATION.md):
+After [npm installation](NPM.md), use your chosen non-sensitive working directory in every terminal. Source developers can run `npm link --ignore-scripts` from the checkout to provide the same command. Select a model ID returned by the [native probe](LOCAL_VALIDATION.md):
 
 ```bash
-node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
+cae desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
 ```
 
 Keep this terminal running. First launch creates `.cae/desktop/config.json`; later launches reuse it and reject an unexpected model/baseline change. The default is shadow + baseline-only, which does not classify task complexity or call Jev. Starting does not submit a task; sending a task consumes the normal model allowance.
@@ -21,7 +21,7 @@ Keep this terminal running. First launch creates `.cae/desktop/config.json`; lat
 In another terminal:
 
 ```bash
-node bin/cae.mjs desktop status
+cae desktop status
 ```
 
 Wait for `phase=running`, `effectiveProvider=cae`, `connected=true` and at least one successful bridge check. The output includes the experimental desktop PID and configuration path. The provider display name is `CAE experimental local effort controller`; CAE does not patch the native window title. Automated visual identification was not accepted independently.
@@ -33,12 +33,12 @@ Custom locations are supported with `--config PATH` and `--app PATH`. Use the sa
 For a baseline instance, select only efforts from the actual capability set:
 
 ```bash
-node bin/cae.mjs control off --config .cae/desktop/config.json
-node bin/cae.mjs lock low --config .cae/desktop/config.json
-node bin/cae.mjs control auto --config .cae/desktop/config.json
+cae control off --config .cae/desktop/config.json
+cae lock low --config .cae/desktop/config.json
+cae control auto --config .cae/desktop/config.json
 # Send an eligible synthetic text task in the experimental window.
-node bin/cae.mjs control off --config .cae/desktop/config.json
-node bin/cae.mjs unlock --config .cae/desktop/config.json
+cae control off --config .cae/desktop/config.json
+cae unlock --config .cae/desktop/config.json
 ```
 
 Controls apply to this CAE instance, not a single chat. Locks affect only eligible auto requests; unsupported history still bypasses adaptation. Controls affect the next unsent request, not a response already being generated.
@@ -48,7 +48,7 @@ Controls apply to this CAE instance, not a single chat. Locks affect only eligib
 Stop the old experimental instance first. Supply `TYPESAFE_API_KEY` through your normal environment setup, without putting its value in command arguments or public logs:
 
 ```bash
-node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt \
+cae desktop start --model "$MODEL_ID" --auth chatgpt \
   --enable-upstream --enable-jev
 ```
 
@@ -64,14 +64,14 @@ Every desktop Jev process permits at most eight evaluations, or a smaller config
 With explicit authorization to change real request effort, add the separate auto permission:
 
 ```bash
-node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt \
+cae desktop start --model "$MODEL_ID" --auth chatgpt \
   --enable-upstream --enable-jev --allow-jev-auto
 ```
 
 Startup still uses shadow/off. Once running, check `judgeKind=typesafe`, `shadowOnly=false`, `lockedEffort=null`, `judgeCalls=0` and `activeRequests=0`, then switch:
 
 ```bash
-node bin/cae.mjs control auto --config .cae/desktop/config.json
+cae control auto --config .cae/desktop/config.json
 ```
 
 Invalid decisions, timeouts and exhausted budgets retain the incoming effort; when effort is absent, the configured baseline is used. Other models and unsupported shapes bypass adaptation. The desktop effort selector may continue showing the user's chosen baseline: CAE modifies the outbound request, not that selector.
@@ -87,7 +87,7 @@ These English examples are reproduction instructions, not a claim that the origi
 ## Optional 2000 ms timeout experiment
 
 ```bash
-node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt \
+cae desktop start --model "$MODEL_ID" --auth chatgpt \
   --enable-upstream --enable-jev --allow-jev-auto --jev-timeout-ms 2000
 ```
 
@@ -98,8 +98,8 @@ The default remains 1500 ms. Restart without the parameter to restore the origin
 ## Inspect results
 
 ```bash
-node bin/cae.mjs desktop status
-node bin/cae.mjs report --config .cae/desktop/config.json
+cae desktop status
+cae report --config .cae/desktop/config.json
 ```
 
 Reports aggregate an append-only event file and can include earlier instances. For a trial, filter by its time window and correlate local request IDs across `decision`, `request_prepared`, `request_sent` and `upstream_outcome`. A recommendation alone is not an applied change. An applied request setting plus completion is not proof of actual model reasoning allocation or task quality.
@@ -109,8 +109,8 @@ Jev timings separate observed request creation, send start, body sent, response 
 ## Stop and recover
 
 ```bash
-node bin/cae.mjs control off --config .cae/desktop/config.json
-node bin/cae.mjs desktop stop
+cae control off --config .cae/desktop/config.json
+cae desktop stop
 ```
 
 The stop command closes this instance, its tracked children and proxy; success returns `stopped`. Ctrl+C in the startup terminal uses the same cleanup path. Stop interrupts active experimental tasks, so wait for completion when possible. Ordinary desktop instances are not cleanup targets.

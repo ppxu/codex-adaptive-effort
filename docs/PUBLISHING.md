@@ -1,6 +1,6 @@
 # Repository maintenance and publishing
 
-The canonical public repository already exists: [ppxu/codex-adaptive-effort](https://github.com/ppxu/codex-adaptive-effort), default branch `main`. The first npm alpha, `0.1.0-alpha.1`, was published on 2026-09-29 with an explicit file allowlist. Its registry integrity and installation were verified; see [release evidence](VALIDATION.md#npm-registry-publication--2026-09-29). An npm CLI package is not a desktop plugin release.
+The canonical public repository already exists: [ppxu/codex-adaptive-effort](https://github.com/ppxu/codex-adaptive-effort), default branch `main`. The current prerelease is `0.1.0-beta.1`, with an explicit package file allowlist; see its [release receipt](https://github.com/ppxu/codex-adaptive-effort/releases/tag/v0.1.0-beta.1). The first alpha's [historical publication evidence](VALIDATION.md#npm-registry-publication--2026-09-29) is preserved separately. An npm CLI package is not a desktop plugin release.
 
 ## Maintain the existing repository
 
@@ -27,13 +27,15 @@ A successful push is not a successful CI run, and a previous commit's CI does no
 
 ## Version and release policy
 
-The current source version is `0.1.0-alpha.1`; ongoing changes are listed under Unreleased. The npm publication is separately recorded; no Git tag or GitHub Release is implied. Future releases need a new version in `package.json` and `package-lock.json`, maintainer authorization, the tested commit and relevant compatibility evidence. Never attempt to overwrite the published version.
+The current source version is `0.1.0-beta.1`; ongoing changes belong under Unreleased. Beta releases use npm's explicit `beta` tag and a GitHub prerelease. Do not move `latest` as part of beta publication. Beta means opt-in testing within the documented compatibility range, not a stable or production-readiness claim.
 
-## Publish an authorized npm alpha
+Each release needs matching versions in `package.json` and `package-lock.json`, maintainer authorization, the tested merged commit and relevant compatibility evidence. Record the exact commit, CI, registry integrity and clean-install results in its GitHub release notes. Never overwrite a published version; use a new version for any package change.
 
-The commands below show the first-release procedure. For a future release, substitute its new version and archive name; `0.1.0-alpha.1` is already published.
+## Publish an authorized npm beta
 
-First review the staged source and the exact commit's CI, then build and inspect the package:
+The commands below use `0.1.0-beta.1`. For any later release, substitute its new version and archive name; an existing published version cannot be reused.
+
+First review the staged source, merge the approved pull request and check the exact merge commit's CI. Build and inspect the package from that commit:
 
 ```bash
 npm ci --ignore-scripts
@@ -47,13 +49,15 @@ The archive must contain only the explicit runtime/docs allowlist plus npm's sta
 Only after the maintainer authorizes the exact version and has normal npm publish access:
 
 ```bash
-npm publish ./codex-adaptive-effort-0.1.0-alpha.1.tgz --ignore-scripts \
-  --access public --tag alpha --registry https://registry.npmjs.org/
-npm view codex-adaptive-effort@0.1.0-alpha.1 version dist.integrity \
+npm publish ./codex-adaptive-effort-0.1.0-beta.1.tgz --ignore-scripts \
+  --access public --tag beta --registry https://registry.npmjs.org/
+npm view codex-adaptive-effort@0.1.0-beta.1 version dist.integrity \
   --registry https://registry.npmjs.org/
 ```
 
-Use npm's normal interactive authentication/OTP flow when required; never paste tokens into issues, shell arguments or source. Check that the registry integrity matches the reviewed archive and verify the `alpha` dist-tag before claiming release success. A missing package lookup does not reserve its name or prove ownership. After confirmed publication, update [installation availability](NPM.md) and the README. Publishing a package does not validate new native desktop versions.
+Use npm's normal interactive authentication/OTP flow when required; never paste tokens into issues, shell arguments or source. Check that the registry integrity matches the reviewed archive and verify the `beta` dist-tag before claiming release success. Install the registry version in a temporary prefix with empty npm configs, then verify `cae --version` and `cae --help`. Leave the user's installed package intact during validation.
+
+Create `v0.1.0-beta.1` at the tested merge commit and a GitHub prerelease with the publication receipt. A missing package lookup does not reserve its name or prove ownership. Keep [installation availability](NPM.md) and the README aligned with the confirmed release. Publishing a package does not validate new native desktop versions.
 
 ## Fresh exports only: legacy first-publication helper
 

@@ -48,6 +48,11 @@ test('native metadata preflight catches original desktop scope bug and accepts r
   const result = await verifyDesktopProvider(process.execPath, [fixture, 'ok', ...codexArgs(c, 'chatgpt', DESKTOP_ARGS)], c);
   assert.deepEqual(result, { provider: 'cae', model: 'synthetic-model', effort: 'medium' });
 });
+for (const retry of ['request_max_retries', 'stream_max_retries']) test(`desktop preflight refuses effective ${retry}`, async () => {
+  const c = config();
+  const args = codexArgs(c, 'chatgpt', [...DESKTOP_ARGS, '-c', `model_providers.cae.${retry}=2`]);
+  await assert.rejects(verifyDesktopProvider(process.execPath, [fixture, 'ok', ...args], c), /effective_provider_mismatch/);
+});
 for (const [scenario, code] of [['mismatch', 'effective_provider_mismatch'], ['secret', 'effective_provider_mismatch'],
   ['rpc-error', 'config_rpc_error'], ['malformed', 'config_invalid_json'], ['null', 'config_invalid_message'], ['hang', 'config_timeout']]) {
   test('desktop preflight fails closed: ' + scenario, async () => {
