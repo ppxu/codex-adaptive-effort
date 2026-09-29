@@ -27,16 +27,27 @@ Codex Adaptive Effort (CAE) is an experimental local HTTP/SSE proxy that can cha
 
 The default evaluator is **baseline-only**, a transport test fixture rather than a complexity classifier. Live Jev processing must be explicitly enabled. CAE never rewrites global Codex configuration or reads native login files. Native Codex handles its own login.
 
-## Install from source
+## Install and run
 
-Requires Node.js **22.16+**, Git and an existing Codex installation for native integration. There are no third-party runtime dependencies. The package is not published to npm; use the checked-out CLI directly.
+Requires Node.js **22.16+**, npm and an existing Codex installation for native integration. There are no third-party runtime dependencies or install hooks. Install the published [npm alpha](https://www.npmjs.com/package/codex-adaptive-effort):
+
+```bash
+npm install --global --ignore-scripts codex-adaptive-effort@alpha
+cae --version
+cae --help
+```
+
+The first published version is `0.1.0-alpha.1`. See the [npm guide](docs/NPM.md) for pinned versions, Git commits, local archives, upgrades, uninstalling and configuration locations. Global installation provides the command; configuration stays in your chosen working directory.
+
+For source development:
 
 ```bash
 git clone https://github.com/ppxu/codex-adaptive-effort.git
 cd codex-adaptive-effort
 npm ci --ignore-scripts
 npm run verify
-node bin/cae.mjs --help
+npm link --ignore-scripts
+cae --help
 ```
 
 Verification uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24. Passing CI does not imply native integration on all these platforms.
@@ -44,11 +55,13 @@ Verification uses synthetic data and local test servers; it does not call real m
 ## Quick start: inspect capabilities
 
 ```bash
-node bin/cae.mjs doctor
-node bin/cae.mjs probe > capabilities.local.json
+mkdir cae-trial
+cd cae-trial
+cae doctor
+cae probe > capabilities.local.json
 ```
 
-These commands inspect the native CLI and query `model/list`; they do not generate model output. If Codex is not on `PATH`, pass `--codex /path/to/trusted/codex`. Select a real model ID and its supported effort values from the capture; do not assume every model supports every effort. Captures stay local and are ignored by Git.
+These commands inspect the native CLI and query `model/list`; they do not generate model output. If Codex is not on `PATH`, pass `--codex /path/to/trusted/codex`. Select a real model ID and its supported effort values from the capture; do not assume every model supports every effort. Keep captures local and out of version control; this source repository includes ignore rules, but another working directory may not.
 
 Continue with the [CLI validation guide](docs/LOCAL_VALIDATION.md) or the [desktop launcher guide](docs/DESKTOP_LAUNCHER.md).
 
@@ -58,10 +71,10 @@ Validated on **macOS 27.0 arm64**, **ChatGPT/Codex desktop 26.924.22138 (build 1
 
 ```bash
 # Replace MODEL_ID with an ID returned by your native probe.
-node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
-# In another terminal:
-node bin/cae.mjs desktop status
-node bin/cae.mjs desktop stop
+cae desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
+# In another terminal, from the same working directory:
+cae desktop status
+cae desktop stop
 ```
 
 Use a **new local Codex chat** in the experimental window and a directory containing only non-sensitive test material. Existing chats retain their providers. The instance has separate Electron data but shares native Codex home and login. Ordinary ChatGPT conversations and cloud tasks are outside this integration.
@@ -83,8 +96,8 @@ See [versioned acceptance evidence](docs/LOCAL_ACCEPTANCE.md) and [known limitat
 ## Stop and restore
 
 ```bash
-node bin/cae.mjs control off --config .cae/desktop/config.json
-node bin/cae.mjs desktop stop
+cae control off --config .cae/desktop/config.json
+cae desktop stop
 ```
 
 `off` still uses the proxy. Stop the experimental instance and return to ordinary Codex to leave the proxy path. No global configuration or login files need restoring. A proxy crash does not automatically switch to a direct connection.

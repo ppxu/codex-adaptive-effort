@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { CaeError, isObject } from './util.mjs';
 import { EFFORT_NAMES } from './config.mjs';
+import { VERSION } from './version.mjs';
 
 export function nativeEnvironment(source = process.env) {
   const env = { ...source }; delete env.TYPESAFE_API_KEY; return env;
@@ -63,7 +64,7 @@ export async function probeModels(binary = 'codex', { args = ['app-server'], tim
       if (typeof cursor !== 'string' || cursors.has(cursor)) { finish(new CaeError('codex_probe_cursor_loop')); return; }
       cursors.add(cursor); list(cursor);
     });
-    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'codex_adaptive_effort', version: '0.1.0-alpha.1' } } });
+    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'codex_adaptive_effort', version: VERSION } } });
   });
 }
 export function codexArgs(config, auth, passthrough = []) {

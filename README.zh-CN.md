@@ -22,7 +22,19 @@
 
 **不实现：** WebSocket 代理、原生 Codex 补丁、自动桌面安装、`configuration_update` 注入、多模型路由、配额耗尽换渠道、完整缓存优化。含图片、未知增量上下文、未知历史条目或内容类型、非字符串工具结果、压缩历史或已有配置更新的请求会原样旁路，不调用判断器；手动锁档也不越过此边界。
 
-## 先离线运行（不需要任何模型密钥）
+## 用 npm 安装
+
+需要 Node.js **22.16+**。[npm 包](https://www.npmjs.com/package/codex-adaptive-effort)已发布，首个版本为 `0.1.0-alpha.1`。安装后直接使用 `cae` 命令，不必保留源码目录：
+
+```bash
+npm install --global --ignore-scripts codex-adaptive-effort@alpha
+cae --version
+cae --help
+```
+
+完整的安装、升级、卸载和桌面启动步骤见 [npm 使用说明](docs/NPM.md)。配置仍保存在你选择的工作目录；在同一目录执行 `cae desktop start/status/stop`，或者始终传入同一个 `--config`。后文的 `node bin/cae.mjs` 都可以替换成 `cae`。
+
+## 从源码离线运行（不需要任何模型密钥）
 
 Node.js **22.16+**。运行代码没有第三方 npm 依赖，也没有安装脚本。
 
