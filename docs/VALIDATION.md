@@ -8,6 +8,16 @@ The runtime source `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674` passed 199 tests o
 
 Use [local acceptance](LOCAL_ACCEPTANCE.md) for real native/model evidence and [limitations](LIMITATIONS.md) for untested boundaries. The [desktop record](DESKTOP_ACCEPTANCE.md) and [Jev record](JEV_SHADOW_ACCEPTANCE.md) separate actual transport from evaluator-only and shadow tests.
 
+## npm registry publication — 2026-09-29
+
+Published `codex-adaptive-effort@0.1.0-alpha.1` from tested source `1b0e27d32662eae9871792fce0e76f6a4d9f5ebe` at `2026-09-29T02:31:48.211Z`. All six jobs in the [matching package CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36512282178) passed. The archive contains 24 public files and has SHA-512 integrity:
+
+```text
+sha512-qhz5N7CfVAAszbLTqsRDw0Tsn8kaZSMM8NJZcm5+UKu4xN9kmrPhe/HL6bGMcXprFNm04zmvR+nS7WjGX5rerA==
+```
+
+Anonymous registry metadata matched this integrity and version; both `alpha` and `latest` pointed to `0.1.0-alpha.1` at verification. Use the explicit `@alpha` installation command. A clean registry install with empty npm configs and a temporary global prefix passed `cae --version` and `cae --help`. It did not change the user's global npm prefix or call a model. The published archive is the original reviewed package-preparation snapshot; subsequent repository documentation records its release without changing the immutable archive.
+
 ## npm package preparation — 2026-09-29
 
 Against baseline `c53b588f16cac5b0a32a613f50634dca6cecc1fa` plus this package change, `npm ci --ignore-scripts` and `npm run verify` passed locally on macOS 27.0 arm64 / Node v24.16.0 with npm 11.18.0: **214 tests**, zero failures, cancellations or skips, plus syntax/JSON checks and the offline demo.

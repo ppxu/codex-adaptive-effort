@@ -6,7 +6,7 @@ User-visible changes are recorded here. Unreleased entries describe the current 
 
 ### Added
 
-- Installable npm CLI package with an explicit runtime/docs file list, `cae --version`, offline archive/install tests and installation/upgrade instructions. Registry publication is a separate release step.
+- Installable npm CLI package with an explicit runtime/docs file list, `cae --version`, offline archive/install tests and installation/upgrade instructions. The first npm alpha was published on 2026-09-29; see [release evidence](docs/VALIDATION.md#npm-registry-publication--2026-09-29).
 - Guarded macOS arm64 desktop launcher with version/signature checks, native capability/provider preflight and owned-process cleanup.
 - Explicit desktop Jev shadow and auto trial controls, an eight-evaluation process cap and optional process-only 2000 ms timeout; the default ceiling remains 1500 ms.
 - Metadata-only Jev fetch stage timings and actual timeout values in status.

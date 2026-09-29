@@ -4,21 +4,21 @@ Requires Node.js **22.16+** and npm. Native integration also requires your exist
 
 ## Package availability
 
-This revision prepares `codex-adaptive-effort@0.1.0-alpha.1` for npm distribution. **It has not been published to the npm registry by this change.** Do not infer registry availability from a source version or a successful package test.
+[`codex-adaptive-effort@0.1.0-alpha.1`](https://www.npmjs.com/package/codex-adaptive-effort/v/0.1.0-alpha.1) was published on 2026-09-29. The registry's version, `alpha` tag and SHA-512 integrity were checked against the reviewed archive, followed by an anonymous registry installation into a temporary prefix. See [release evidence](VALIDATION.md#npm-registry-publication--2026-09-29).
 
-Until the first registry release, install a reviewed Git commit with npm (requires Git):
+Install from npm:
 
 ```bash
-# Replace REVIEWED_COMMIT with the full tested Git commit SHA.
-npm install --global --ignore-scripts github:ppxu/codex-adaptive-effort#REVIEWED_COMMIT
+npm install --global --ignore-scripts codex-adaptive-effort@alpha
 cae --version
 cae --help
 ```
 
-After a maintainer publishes the alpha release to npm, the shorter installation command will be:
+To pin the exact release, use `codex-adaptive-effort@0.1.0-alpha.1`. Installing a reviewed Git commit remains an alternative (requires Git):
 
 ```bash
-npm install --global --ignore-scripts codex-adaptive-effort@alpha
+# Replace REVIEWED_COMMIT with the full tested Git commit SHA.
+npm install --global --ignore-scripts github:ppxu/codex-adaptive-effort#REVIEWED_COMMIT
 ```
 
 No administrator privileges should be necessary with a user-owned Node installation. If `cae` is not found, add npm's global executable directory to your `PATH` (`npm prefix --global`: the `bin` subdirectory on macOS/Linux, or the prefix itself on Windows). Do not put credentials in command arguments.
@@ -51,7 +51,7 @@ For CLI integration, follow [local validation](LOCAL_VALIDATION.md), replacing `
 
 ## Upgrade, remove or install a local archive
 
-Stop the experimental instance before replacing the package: generated desktop launchers reference the installed package path. After an authorized registry release, upgrade with the same `npm install --global ...@alpha` command. A CAE upgrade does not widen native desktop compatibility or change stored configuration.
+Stop the experimental instance before replacing the package: generated desktop launchers reference the installed package path. Upgrade with the same `npm install --global ...@alpha` command. A CAE upgrade does not widen native desktop compatibility or change stored configuration.
 
 ```bash
 cae desktop stop

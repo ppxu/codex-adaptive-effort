@@ -1,6 +1,6 @@
 # Repository maintenance and publishing
 
-The canonical public repository already exists: [ppxu/codex-adaptive-effort](https://github.com/ppxu/codex-adaptive-effort), default branch `main`. The package is prepared for npm publication with an explicit file allowlist and `alpha` dist-tag. It has not been published to the registry by this change; source availability is not an npm release or a desktop plugin release.
+The canonical public repository already exists: [ppxu/codex-adaptive-effort](https://github.com/ppxu/codex-adaptive-effort), default branch `main`. The first npm alpha, `0.1.0-alpha.1`, was published on 2026-09-29 with an explicit file allowlist. Its registry integrity and installation were verified; see [release evidence](VALIDATION.md#npm-registry-publication--2026-09-29). An npm CLI package is not a desktop plugin release.
 
 ## Maintain the existing repository
 
@@ -27,9 +27,11 @@ A successful push is not a successful CI run, and a previous commit's CI does no
 
 ## Version and release policy
 
-The current source version is `0.1.0-alpha.1`; ongoing changes are listed under Unreleased. Do not infer a Git tag, GitHub Release or npm publication from a changelog heading. A release is a separate maintainer decision that should identify the tested commit, relevant compatibility evidence and known limitations. Package preparation does not create a registry release.
+The current source version is `0.1.0-alpha.1`; ongoing changes are listed under Unreleased. The npm publication is separately recorded; no Git tag or GitHub Release is implied. Future releases need a new version in `package.json` and `package-lock.json`, maintainer authorization, the tested commit and relevant compatibility evidence. Never attempt to overwrite the published version.
 
 ## Publish an authorized npm alpha
+
+The commands below show the first-release procedure. For a future release, substitute its new version and archive name; `0.1.0-alpha.1` is already published.
 
 First review the staged source and the exact commit's CI, then build and inspect the package:
 

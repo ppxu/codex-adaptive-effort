@@ -29,16 +29,15 @@ The default evaluator is **baseline-only**, a transport test fixture rather than
 
 ## Install and run
 
-Requires Node.js **22.16+**, npm and an existing Codex installation for native integration. There are no third-party runtime dependencies or install hooks. The npm package is prepared but **not yet published to the registry**. Until its first release, install a reviewed Git commit with npm (requires Git):
+Requires Node.js **22.16+**, npm and an existing Codex installation for native integration. There are no third-party runtime dependencies or install hooks. Install the published [npm alpha](https://www.npmjs.com/package/codex-adaptive-effort):
 
 ```bash
-# Replace REVIEWED_COMMIT with the full tested Git commit SHA.
-npm install --global --ignore-scripts github:ppxu/codex-adaptive-effort#REVIEWED_COMMIT
+npm install --global --ignore-scripts codex-adaptive-effort@alpha
 cae --version
 cae --help
 ```
 
-After the first alpha registry publication, installation will be `npm install --global --ignore-scripts codex-adaptive-effort@alpha`. See the [npm guide](docs/NPM.md) for local archives, upgrades, uninstalling and configuration locations. Global installation provides the command; configuration stays in your chosen working directory.
+The first published version is `0.1.0-alpha.1`. See the [npm guide](docs/NPM.md) for pinned versions, Git commits, local archives, upgrades, uninstalling and configuration locations. Global installation provides the command; configuration stays in your chosen working directory.
 
 For source development:
 

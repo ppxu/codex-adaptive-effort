@@ -24,16 +24,15 @@
 
 ## 用 npm 安装
 
-需要 Node.js **22.16+**。npm 包已准备好，**尚未发布到 npm registry**。现在可以通过 npm 安装经过验证的 Git 提交（需要 Git），之后直接使用 `cae` 命令，不必保留源码目录：
+需要 Node.js **22.16+**。[npm 包](https://www.npmjs.com/package/codex-adaptive-effort)已发布，首个版本为 `0.1.0-alpha.1`。安装后直接使用 `cae` 命令，不必保留源码目录：
 
 ```bash
-# 把 REVIEWED_COMMIT 替换为经过验证的完整提交 SHA。
-npm install --global --ignore-scripts github:ppxu/codex-adaptive-effort#REVIEWED_COMMIT
+npm install --global --ignore-scripts codex-adaptive-effort@alpha
 cae --version
 cae --help
 ```
 
-首次发布到 npm 后，安装命令可简化为 `npm install --global --ignore-scripts codex-adaptive-effort@alpha`。完整的安装、升级、卸载和桌面启动步骤见 [npm 使用说明](docs/NPM.md)。配置仍保存在你选择的工作目录；在同一目录执行 `cae desktop start/status/stop`，或者始终传入同一个 `--config`。后文的 `node bin/cae.mjs` 都可以替换成 `cae`。
+完整的安装、升级、卸载和桌面启动步骤见 [npm 使用说明](docs/NPM.md)。配置仍保存在你选择的工作目录；在同一目录执行 `cae desktop start/status/stop`，或者始终传入同一个 `--config`。后文的 `node bin/cae.mjs` 都可以替换成 `cae`。
 
 ## 从源码离线运行（不需要任何模型密钥）
 
