@@ -8,6 +8,12 @@ The runtime source `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674` passed 199 tests o
 
 Use [local acceptance](LOCAL_ACCEPTANCE.md) for real native/model evidence and [limitations](LIMITATIONS.md) for untested boundaries. The [desktop record](DESKTOP_ACCEPTANCE.md) and [Jev record](JEV_SHADOW_ACCEPTANCE.md) separate actual transport from evaluator-only and shadow tests.
 
+## Beta release — 2026-09-29
+
+`0.1.0-beta.1` packages the comprehensive review below with matching release metadata and installation documentation. The runtime review commit `e0689d52311177607ec2da866a15ed70fe6eb689` passed all seven jobs in its [matching CI](https://github.com/ppxu/codex-adaptive-effort/actions/runs/36518018448). Version and documentation changes need their own CI; that earlier result does not validate a later release commit.
+
+The [beta publication receipt](https://github.com/ppxu/codex-adaptive-effort/releases/tag/v0.1.0-beta.1) records the exact merged release commit, its CI, reviewed archive integrity, registry tag and clean registry installation. Existing native transmission evidence remains version-scoped. The beta release does not add a new native compatibility claim or real generation acceptance.
+
 ## Comprehensive review — 2026-09-29
 
 The [review record](CODE_REVIEW_2026-09-29.md) covers source changes against `3726e3178bdc218da794ee20c493db7826fedf5d`. On macOS 27.0 arm64 / Node v24.16.0 / npm 11.18.0, the baseline passed 214 offline tests. The accompanying changes passed **236 tests**, zero failures, cancellations or skips, plus syntax/JSON checks, public document links and the offline demo. Archive/install tests verify all installed files and documentation links in a temporary prefix without changing the user's global installation. Windows skips only the existing POSIX checks and the new POSIX signal-escalation test; check the exact commit's CI for platform results.
@@ -28,7 +34,7 @@ The probe returned seven models and skipped zero entries. These values describe 
 
 A local reporting microbenchmark used 100,000 identical synthetic `upstream_outcome` rows (12,500,000 bytes), with completed=true and input/cached/output/reasoning counters 100/40/20/8. Three fresh Node processes per implementation reported identical totals: 100,000 requests and 2,000,000 output tokens. Baseline `3726e31` full-file parsing plus report had peak RSS 145,376–145,664 KiB (median 145,488), versus 63,376–63,456 KiB (median 63,440) for `reportFile`. Measured report durations were 69–103 ms versus 58–59 ms. Baseline ran first on a warm local filesystem; this is a small synthetic memory check, not a statistical latency comparison or a claim about model cost. Temporary benchmark files were removed.
 
-The iteration did not rerun real native transmission, cancellation in the UI, Jev evaluation or task-quality acceptance, and did not publish to npm. Those remain separate from metadata and synthetic tests. See [troubleshooting](TROUBLESHOOTING.md) for source-only fixes and the existing transport guides for the next explicitly authorized native trial.
+The review iteration did not rerun real native transmission, cancellation in the UI, Jev evaluation or task-quality acceptance, and did not publish to npm. Those remain separate from metadata and synthetic tests; beta publication is recorded separately above. See [troubleshooting](TROUBLESHOOTING.md) for the fixes and the existing transport guides for the next explicitly authorized native trial.
 
 ## npm registry publication — 2026-09-29
 
@@ -38,7 +44,7 @@ Published `codex-adaptive-effort@0.1.0-alpha.1` from tested source `1b0e27d32662
 sha512-qhz5N7CfVAAszbLTqsRDw0Tsn8kaZSMM8NJZcm5+UKu4xN9kmrPhe/HL6bGMcXprFNm04zmvR+nS7WjGX5rerA==
 ```
 
-Anonymous registry metadata matched this integrity and version; both `alpha` and `latest` pointed to `0.1.0-alpha.1` at verification. Use the explicit `@alpha` installation command. A clean registry install with empty npm configs and a temporary global prefix passed `cae --version` and `cae --help`. It did not change the user's global npm prefix or call a model. The published archive is the original reviewed package-preparation snapshot; subsequent repository documentation records its release without changing the immutable archive.
+Anonymous registry metadata matched this integrity and version; both `alpha` and `latest` pointed to `0.1.0-alpha.1` at verification. The alpha was installed through the explicit `@alpha` tag. A clean registry install with empty npm configs and a temporary global prefix passed `cae --version` and `cae --help`. It did not change the user's global npm prefix or call a model. The published archive is the original reviewed package-preparation snapshot; subsequent repository documentation records its release without changing the immutable archive.
 
 ## npm package preparation — 2026-09-29
 

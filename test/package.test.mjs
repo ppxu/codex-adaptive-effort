@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
 test('npm manifest has a complete explicit runtime allowlist and no lifecycle hooks or dependencies', () => {
-  assert.notEqual(pkg.private, true); assert.equal(pkg.publishConfig.tag, 'alpha');
+  assert.notEqual(pkg.private, true); assert.equal(pkg.publishConfig.tag, 'beta');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.bin.cae, './bin/cae.mjs');
   for (const file of readdirSync(join(root, 'bin')).filter(f => f.endsWith('.mjs')))

@@ -2,11 +2,11 @@
 
 **固定执行模型，动态调整思考强度。** 这是面向本地 Codex 的实验性开源控制器，设计借鉴 Astra-Ares 的固定模型/决策生命周期，以及 Jev Codex Router 的本地代理/有限判断摘要。
 
-**当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面 Jev 自动升档、降档与超时回退均已有真实通过样例，见 [auto 记录](docs/LOCAL_ACCEPTANCE.md)；正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
+**当前版本：`0.1.0-beta.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面 Jev 自动升档、降档与超时回退均已有真实通过样例，见 [auto 记录](docs/LOCAL_ACCEPTANCE.md)；正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
 
 [English](README.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [排错指南](docs/TROUBLESHOOTING.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
 
-[本轮源码改进](docs/CODE_REVIEW_2026-09-29.md)尚未发布到 npm；安装已发布的 `0.1.0-alpha.1` 不包含这些更新。
+本 beta 包含[本轮运行时、报告与安装修复](docs/CODE_REVIEW_2026-09-29.md)，保持现有原生兼容范围和默认 shadow 行为，适合主动选择的实验验证。确切发布提交、CI 与 npm 校验见[发布记录](https://github.com/ppxu/codex-adaptive-effort/releases/tag/v0.1.0-beta.1)。
 
 ## 已实现
 
@@ -26,15 +26,15 @@
 
 ## 用 npm 安装
 
-需要 Node.js **22.16+**。[npm 包](https://www.npmjs.com/package/codex-adaptive-effort)已发布，首个版本为 `0.1.0-alpha.1`。安装后直接使用 `cae` 命令，不必保留源码目录：
+需要 Node.js **22.16+**。[npm 包](https://www.npmjs.com/package/codex-adaptive-effort)的 beta 版本为 `0.1.0-beta.1`。安装后直接使用 `cae` 命令，不必保留源码目录：
 
 ```bash
-npm install --global --ignore-scripts codex-adaptive-effort@alpha
+npm install --global --ignore-scripts codex-adaptive-effort@beta
 cae --version
 cae --help
 ```
 
-完整的安装、升级、卸载和桌面启动步骤见 [npm 使用说明](docs/NPM.md)。配置仍保存在你选择的工作目录；在同一目录执行 `cae desktop start/status/stop`，或者始终传入同一个 `--config`。后文的 `node bin/cae.mjs` 都可以替换成 `cae`。
+请显式使用 `@beta`，或固定 `@0.1.0-beta.1`；本次 beta 发布不提升 `latest` 标签。完整的安装、升级、卸载和桌面启动步骤见 [npm 使用说明](docs/NPM.md)。配置仍保存在你选择的工作目录；在同一目录执行 `cae desktop start/status/stop`，或者始终传入同一个 `--config`。后文的 `node bin/cae.mjs` 都可以替换成 `cae`。
 
 ## 从源码离线运行（不需要任何模型密钥）
 

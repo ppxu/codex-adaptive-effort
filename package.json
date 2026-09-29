@@ -1,9 +1,9 @@
 {
   "name": "codex-adaptive-effort",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-beta.1",
   "description": "A fixed-model, opt-in reasoning-effort controller for local Codex Responses traffic.",
   "type": "module",
-  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/", "tag": "alpha"},
+  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/", "tag": "beta"},
   "files": [
     "bin/cae.mjs",
     "bin/cae-desktop-bridge.mjs",

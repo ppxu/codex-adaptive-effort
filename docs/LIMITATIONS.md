@@ -31,4 +31,4 @@ The [desktop launcher](DESKTOP_LAUNCHER.md) is limited to the validated macOS ar
 
 A server process lifetime cap is not a spending guarantee. Services may bill requests that time out or are cancelled. No trial uses a real key unless the operator explicitly enables it.
 
-Release blockers for any stable claim: independent security review; real native CLI acceptance for both intended auth paths; packaged desktop integration and upgrade compatibility; long-session/compaction acceptance; low/normal/hard task comparisons including Chinese short follow-ups; actual quality, cache, latency and cost observations. Until then, treat this as a protocol-level alpha.
+Release blockers for any stable claim: independent security review; real native CLI acceptance for both intended auth paths; packaged desktop integration and upgrade compatibility; long-session/compaction acceptance; low/normal/hard task comparisons including Chinese short follow-ups; actual quality, cache, latency and cost observations. The beta is for opt-in testing within the documented compatibility range; these blockers remain.

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Start with `cae --version`, `cae --help` and `cae doctor`. These do not generate model output. Use the same working directory in every terminal or pass the same `--config PATH`. The fixes described in the [2026-09-29 review](CODE_REVIEW_2026-09-29.md) are source changes after the first npm release; they are not included in the immutable `0.1.0-alpha.1` archive.
+Start with `cae --version`, `cae --help` and `cae doctor`. These do not generate model output. Use the same working directory in every terminal or pass the same `--config PATH`. The fixes described in the [2026-09-29 review](CODE_REVIEW_2026-09-29.md) are included in `0.1.0-beta.1`; they are not included in the immutable `0.1.0-alpha.1` archive.
 
 ## Installation and configuration
 

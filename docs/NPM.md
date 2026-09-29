@@ -2,21 +2,23 @@
 
 Requires Node.js **22.16+** and npm. Native integration also requires your existing Codex installation and normal login. The package contains original CAE runtime code with no runtime dependencies, install hooks or bundled native binaries.
 
-The unreleased source package also includes all linked public documentation and the original synthetic validation evidence. Its installed links are checked offline. The first published archive contains selected guides only; use the [online documentation](https://github.com/ppxu/codex-adaptive-effort/tree/main/docs) if a local documentation link is missing. See [troubleshooting](TROUBLESHOOTING.md) for setup and control errors.
+Starting with `0.1.0-beta.1`, the package includes all linked public documentation and the original synthetic validation evidence. Its installed links are checked offline. The first alpha archive contains selected guides only; use the [online documentation](https://github.com/ppxu/codex-adaptive-effort/tree/main/docs) if an alpha installation has a missing documentation link. See [troubleshooting](TROUBLESHOOTING.md) for setup and control errors.
 
 ## Package availability
 
-[`codex-adaptive-effort@0.1.0-alpha.1`](https://www.npmjs.com/package/codex-adaptive-effort/v/0.1.0-alpha.1) was published on 2026-09-29. The registry's version, `alpha` tag and SHA-512 integrity were checked against the reviewed archive, followed by an anonymous registry installation into a temporary prefix. See [release evidence](VALIDATION.md#npm-registry-publication--2026-09-29).
+The current prerelease is [`codex-adaptive-effort@0.1.0-beta.1`](https://www.npmjs.com/package/codex-adaptive-effort/v/0.1.0-beta.1), on the explicit `beta` channel. See its [release receipt](https://github.com/ppxu/codex-adaptive-effort/releases/tag/v0.1.0-beta.1) for the merged source commit, CI, registry integrity and clean installation results. A beta publication does not promote the `latest` tag or widen native compatibility.
+
+The first alpha, `0.1.0-alpha.1`, was published on 2026-09-29 and remains immutable. Its [historical release evidence](VALIDATION.md#npm-registry-publication--2026-09-29) is preserved separately.
 
 Install from npm:
 
 ```bash
-npm install --global --ignore-scripts codex-adaptive-effort@alpha
+npm install --global --ignore-scripts codex-adaptive-effort@beta
 cae --version
 cae --help
 ```
 
-To pin the exact release, use `codex-adaptive-effort@0.1.0-alpha.1`. Installing a reviewed Git commit remains an alternative (requires Git):
+To pin the exact release, use `codex-adaptive-effort@0.1.0-beta.1`. Installing a reviewed Git commit remains an alternative (requires Git):
 
 ```bash
 # Replace REVIEWED_COMMIT with the full tested Git commit SHA.
@@ -53,7 +55,7 @@ For CLI integration, follow [local validation](LOCAL_VALIDATION.md). The [deskto
 
 ## Upgrade, remove or install a local archive
 
-Stop the experimental instance before replacing the package: generated desktop launchers reference the installed package path. Upgrade with the same `npm install --global ...@alpha` command. A CAE upgrade does not widen native desktop compatibility or change stored configuration.
+Stop the experimental instance before replacing the package: generated desktop launchers reference the installed package path. Upgrade with the same `npm install --global ...@beta` command. A CAE upgrade does not widen native desktop compatibility or change stored configuration.
 
 ```bash
 cae desktop stop
@@ -68,7 +70,7 @@ From a source checkout, a local archive can be built and installed without any r
 npm ci --ignore-scripts
 npm run verify
 npm pack --ignore-scripts
-npm install --global --ignore-scripts ./codex-adaptive-effort-0.1.0-alpha.1.tgz
+npm install --global --ignore-scripts ./codex-adaptive-effort-0.1.0-beta.1.tgz
 cae --version
 ```
 
