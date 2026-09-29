@@ -1,4 +1,4 @@
-# Architecture / v0.1.0-alpha.1
+# Architecture
 
 ```text
 Native Codex CLI or guarded desktop bridge (native auth)
@@ -27,7 +27,7 @@ Fixed OpenAI API OR experimental ChatGPT Codex backend
 
 A decision is not proof of application. `beforeSend` checks the latest control revision. `request_prepared` marks request construction; `request_sent` is emitted only when the Node HTTP request finishes writing. Even that is **not** evidence that the model obeyed the setting. `upstream_outcome` records the actual terminal event/status/usage, if observable. A lease is committed only after successful stream completion and only for the same control revision. Unknown or truncated completion never establishes a lease.
 
-The native `session_id` or explicit trusted `x-cae-session` is HMAC'd together with the auth partition using a per-process salt. These identifiers are not written to logs or sent to Jev. `prompt_cache_key` is preserved but never treated as session identity. Without a session header, every eligible call is assessed independently and lease=1. Sessions are capped at 128 retained entries; 64 in-flight HTTP handlers at most. Memory state is not durable across restart.
+The native `session_id` or explicit trusted `x-cae-session` is HMAC'd together with the auth partition using a per-process salt. These identifiers are not written to logs or sent to Jev. `prompt_cache_key` is preserved but never treated as session identity. Without a session header, every eligible call is assessed independently and lease=1. Sessions are capped at 128 retained entries; forwarding has 64 in-flight slots and authenticated local controls have eight separate slots. Memory state is not durable across restart.
 
 ## Context and scope
 

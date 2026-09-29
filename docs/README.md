@@ -7,6 +7,7 @@ English is the default documentation language. Start with the [project overview]
 | Document | Purpose |
 | --- | --- |
 | [npm installation](NPM.md) | Install the command, choose a working directory, upgrade and uninstall |
+| [Troubleshooting](TROUBLESHOOTING.md) | Diagnose setup, controls, bypass and recovery without exposing private data |
 | [CLI validation](LOCAL_VALIDATION.md) | Discover capabilities, keep native auth, verify off/manual/shadow/auto in order |
 | [Desktop launcher](DESKTOP_LAUNCHER.md) | Supported version, isolated startup, Jev controls and recovery |
 | [Known limitations](LIMITATIONS.md) | Compatibility, privacy, reliability and measurement boundaries |
@@ -21,6 +22,7 @@ English is the default documentation language. Start with the [project overview]
 | [Jev evaluation](JEV_SHADOW_ACCEPTANCE.md) | Evaluator-only fixtures, shadow runs, timing and unresolved timeouts |
 | [Offline validation](VALIDATION.md) | Current test scope and the original dated evidence snapshot |
 | [Code quality review](CODE_REVIEW_2026-09-28.md) | Confirmed defects, minimal fixes and synthetic regression evidence |
+| [Comprehensive review](CODE_REVIEW_2026-09-29.md) | Availability, streaming, process lifecycle, reporting, packaging and maintenance improvements |
 | [Acceptance template](acceptance-template.md) | Record a new environment without exposing private data |
 
 ## Develop and maintain

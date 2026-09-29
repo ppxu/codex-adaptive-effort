@@ -8,9 +8,11 @@
 
 Codex Adaptive Effort (CAE) is an experimental local HTTP/SSE proxy that can change `reasoning.effort` for a fixed, user-selected model. It supports the Codex CLI and an isolated instance of the validated Codex desktop application. An optional TypeSafe Jev evaluator recommends effort levels from the model's actual capabilities.
 
-[简体中文](README.zh-CN.md) · [Documentation](docs/README.md) · [Acceptance evidence](docs/LOCAL_ACCEPTANCE.md) · [Changelog](CHANGELOG.md)
+[简体中文](README.zh-CN.md) · [Documentation](docs/README.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Acceptance evidence](docs/LOCAL_ACCEPTANCE.md) · [Changelog](CHANGELOG.md)
 
 > **Alpha: `0.1.0-alpha.1`.** This is an independent project, not an official OpenAI or TypeSafe plugin. Desktop support is limited to the exact macOS/app/CLI combination documented below. Task quality, cost savings and production reliability are not established.
+
+The [latest source improvements](docs/CODE_REVIEW_2026-09-29.md) are unreleased; installing the published alpha does not include them yet.
 
 ## What it does
 
@@ -50,7 +52,7 @@ npm link --ignore-scripts
 cae --help
 ```
 
-Verification uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24. Passing CI does not imply native integration on all these platforms.
+Verification checks public documentation links and uses synthetic data and local test servers; it does not call real model providers. CI runs on Linux, macOS and Windows with Node 22 and 24, plus Linux on the minimum Node 22.16.0. Passing CI does not imply native integration on all these platforms.
 
 ## Quick start: inspect capabilities
 

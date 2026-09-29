@@ -9,7 +9,7 @@ test('offline syntax checks exclude private root captures but still reject inval
   const root = mkdtempSync(join(tmpdir(), 'cae-check-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, 'scripts')); mkdirSync(join(root, 'src'));
-  for (const name of ['check.mjs', 'publication.mjs'])
+  for (const name of ['check.mjs', 'publication.mjs', 'docs.mjs'])
     copyFileSync(new URL('../scripts/' + name, import.meta.url), join(root, 'scripts', name));
   for (const name of ['README.md', 'LICENSE']) writeFileSync(join(root, name), 'Synthetic fixture');
   writeFileSync(join(root, 'package.json'), '{}');

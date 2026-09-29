@@ -11,7 +11,7 @@ npm ci --ignore-scripts
 npm run verify
 ```
 
-Use Node.js 22.16 or later. Runtime code is Node ESM with no third-party runtime dependencies. `verify` checks syntax and JSON, runs tests and executes the offline demo. Tests use synthetic inputs and local servers: no real credentials, model generation or paid provider requests. CI covers Node 22/24 on Linux, macOS and Windows.
+Use Node.js 22.16 or later. Runtime code is Node ESM with no third-party runtime dependencies. `verify` checks syntax, JSON and public Markdown links/anchors, runs tests and executes the offline demo. Tests use synthetic inputs and local servers: no real credentials, model generation or paid provider requests. CI covers Node 22/24 on Linux, macOS and Windows, plus the minimum Node 22.16.0 on Linux. Keep Actions pinned to reviewed commits when updating CI.
 
 ## Report a problem
 

@@ -4,7 +4,9 @@
 
 **当前版本：`0.1.0-alpha.1`。** 实验性 Node.js 实现，不是官方 Codex 桌面插件。已在一台 macOS arm64 机器上验收 ChatGPT 路线的原生 CLI，以及独立桌面实例的 HTTP/SSE、off、纯文本手动锁档及取消恢复；具体版本、能力和边界见 [本机验收记录](docs/LOCAL_ACCEPTANCE.md) 和 [桌面验收记录](docs/DESKTOP_ACCEPTANCE.md)。另有 8 次真实 Jev 合成样例判断通过协议检查，见 [Jev shadow 记录](docs/JEV_SHADOW_ACCEPTANCE.md)；桌面 Jev 自动升档、降档与超时回退均已有真实通过样例，见 [auto 记录](docs/LOCAL_ACCEPTANCE.md)；正式安装和其他环境仍未验收。没有节省费用、保持质量或生产可用性的保证。
 
-[English](README.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
+[English](README.md) · [本地验收](docs/LOCAL_VALIDATION.md) · [排错指南](docs/TROUBLESHOOTING.md) · [架构](docs/ARCHITECTURE.md) · [验证记录](docs/VALIDATION.md) · [限制](docs/LIMITATIONS.md)
+
+[本轮源码改进](docs/CODE_REVIEW_2026-09-29.md)尚未发布到 npm；安装已发布的 `0.1.0-alpha.1` 不包含这些更新。
 
 ## 已实现
 
@@ -43,7 +45,7 @@ npm ci --ignore-scripts
 npm run verify
 ```
 
-`verify` 会做语法检查、自动化测试、五阶段 HTTP/SSE 演示。演示启动的判断器和模型后端都是本地模拟；它证明接线与状态控制，不证明 Jev 判断准确度或真实节省。
+`verify` 会做语法与公共文档链接检查、自动化测试、五阶段 HTTP/SSE 演示。CI 覆盖三种系统的 Node 22/24，以及 Linux 上的最低 Node 22.16.0。演示启动的判断器和模型后端都是本地模拟；它证明接线与状态控制，不证明 Jev 判断准确度或真实节省。
 
 ```bash
 node bin/cae.mjs --help
@@ -55,7 +57,8 @@ node bin/cae.mjs doctor
 已验收版本的 macOS arm64 桌面可直接使用实验启动器：
 
 ```bash
-node bin/cae.mjs desktop start --model gpt-6-astra --auth chatgpt --enable-upstream
+# MODEL_ID 必须来自本机真实能力探针。
+node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream
 # 在另一终端检查或退出：
 node bin/cae.mjs desktop status
 node bin/cae.mjs desktop stop

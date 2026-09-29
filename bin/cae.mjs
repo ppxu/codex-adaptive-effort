@@ -7,9 +7,9 @@ import { spawn } from 'node:child_process';
 import { defaultConfig, loadConfig, readLocalToken } from '../src/config.mjs';
 import { CaeError } from '../src/util.mjs';
 import { BaselineJudge, TypeSafeJudge } from '../src/judge.mjs';
-import { Audit, report } from '../src/audit.mjs';
+import { Audit, reportFile } from '../src/audit.mjs';
 import { startProxy } from '../src/proxy.mjs';
-import { doctor, probeModels, codexArgs } from '../src/codex.mjs';
+import { doctor, probeModels, codexArgs, waitForNative } from '../src/codex.mjs';
 import { VERSION } from '../src/version.mjs';
 
 const HELP = `Codex Adaptive Effort ${VERSION} (Node >=22.16; no dependencies)
@@ -39,12 +39,18 @@ Default is SHADOW with a baseline-only evaluator, not a complexity classifier.
 `;
 function print(value) { console.log(typeof value === 'string' ? value : JSON.stringify(value, null, 2)); }
 async function localCall(c, path, body) {
-  const response = await fetch(`http://127.0.0.1:${c.port}${path}`, {
+  const token = readLocalToken(c.tokenFile);
+  let response;
+  try { response = await fetch(`http://127.0.0.1:${c.port}${path}`, {
     method: body ? 'POST' : 'GET', redirect: 'error', signal: AbortSignal.timeout(3000),
-    headers: { 'x-cae-token': readLocalToken(c.tokenFile), 'content-type': 'application/json' },
+    headers: { 'x-cae-token': token, 'content-type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  if (!response.ok) throw new CaeError(`local_http_${response.status}`);
+  }); } catch { throw new CaeError('local_proxy_unreachable'); }
+  if (!response.ok) {
+    const code = (await response.json().catch(() => null))?.error?.code;
+    const known = ['shadow_only_control', 'unsupported_lock', 'invalid_mode', 'invalid_control', 'too_many_requests'];
+    throw new CaeError(known.includes(code) ? code : `local_http_${response.status}`);
+  }
   return response.json();
 }
 async function main() {
@@ -63,6 +69,13 @@ async function main() {
   const command = p[0];
   if (v.version) { print(VERSION); return; }
   if (!command || v.help) { print(HELP); return; }
+  const commands = ['doctor', 'probe', 'init', 'serve', 'status', 'control', 'lock', 'unlock', 'report', 'codex', 'launch-args', 'desktop'];
+  if (!commands.includes(command)) throw new CaeError('unknown_command');
+  if (command !== 'desktop') {
+    if (p.length !== (['control', 'lock'].includes(command) ? 2 : 1) ||
+        (dash >= 0 && !['codex', 'launch-args'].includes(command))) throw new CaeError('invalid_arguments');
+    if (command === 'control' && !['off', 'shadow', 'auto'].includes(p[1])) throw new CaeError('invalid_mode');
+  }
   if (v['allow-jev-auto'] && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_auto_start_only');
   if (v['jev-timeout-ms'] !== undefined && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_timeout_start_only');
   if (v['jev-timeout-ms'] !== undefined && !['1500', '2000'].includes(v['jev-timeout-ms'])) throw new CaeError('desktop_invalid_jev_timeout');
@@ -114,7 +127,7 @@ async function main() {
     let proxy;
     try { proxy = await startProxy(c, { token: readLocalToken(c.tokenFile), judge,
       emit: record => audit.emit(record), auditHealthy: () => !audit.failed, allowUpstream: v['enable-upstream'] === true }); }
-    catch (e) { audit.close(); throw e; }
+    catch (e) { audit.close(); throw e.code === 'EADDRINUSE' ? new CaeError('proxy_port_in_use') : e; }
     print({ listening: `127.0.0.1:${proxy.port}`, mode: c.mode, judge: c.judge.kind,
       upstream: c.upstream.kind, credentialsLogged: false, note: 'Foreground service. Stop and relaunch normal Codex to bypass it.' });
     let stopping = false;
@@ -126,10 +139,7 @@ async function main() {
   if (command === 'lock') { print(await localCall(c, '/control', { lockedEffort: p[1] })); return; }
   if (command === 'unlock') { print(await localCall(c, '/control', { lockedEffort: null })); return; }
   if (command === 'report') {
-    let text; try { text = readFileSync(c.logFile, 'utf8'); } catch { throw new CaeError('cannot_read_log'); }
-    const records = []; let malformedLines = 0;
-    for (const line of text.split('\n').filter(Boolean)) { try { records.push(JSON.parse(line)); } catch { ++malformedLines; } }
-    print({ ...report(records), malformedLines }); return;
+    print(await reportFile(c.logFile)); return;
   }
   if (['codex', 'launch-args'].includes(command)) {
     const args = codexArgs(c, v.auth, passthrough);
@@ -140,13 +150,24 @@ async function main() {
     const env = { ...process.env, CAE_LOCAL_TOKEN: readLocalToken(c.tokenFile) };
     delete env.TYPESAFE_API_KEY;
     const child = spawn(v.codex, args, { env, stdio: 'inherit', shell: false });
-    child.once('error', () => { console.error('CAE: codex_not_available'); process.exitCode = 1; });
-    child.once('exit', code => { process.exitCode = code ?? 1; }); return;
+    process.exitCode = await waitForNative(child); return;
   }
   throw new CaeError('unknown_command');
 }
 main().catch(error => {
   // Do not echo upstream bodies, environment, argument values or native stderr.
-  console.error(`CAE: ${error instanceof CaeError ? error.code : 'command_failed_check_arguments_and_local_paths'}`);
+  const code = error instanceof CaeError ? error.code : error.code?.startsWith('ERR_PARSE_ARGS_') ? 'invalid_arguments' : 'command_failed_check_arguments_and_local_paths';
+  console.error(`CAE: ${code}`);
+  const hint = {
+    unknown_command: 'Run cae --help to see available commands.',
+    invalid_arguments: 'Run cae --help. Native CLI arguments belong after -- with cae codex or cae launch-args.',
+    cannot_read_config: 'Run cae init first, use the same working directory, or pass --config PATH. Desktop controls use --config .cae/desktop/config.json.',
+    cannot_read_log: 'No readable audit log yet. Start the proxy using this configuration before requesting a report.',
+    local_proxy_unreachable: 'Start the foreground proxy and use its matching --config PATH; desktop status uses cae desktop status.',
+    proxy_port_in_use: 'This proxy port is occupied. Stop your existing experiment or choose a free port in the isolated CAE configuration.',
+    shadow_only_control: 'This desktop process allows off/shadow only. Auto needs a new explicitly opted-in --enable-jev --allow-jev-auto start.',
+    unsupported_lock: 'Choose an effort from cae status supportedEfforts for this model.',
+  }[code];
+  if (hint) console.error(`Hint: ${hint}`);
   process.exitCode = 1;
 });

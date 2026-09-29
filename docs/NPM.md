@@ -1,6 +1,8 @@
 # Install and run the npm package
 
-Requires Node.js **22.16+** and npm. Native integration also requires your existing Codex installation and normal login. The package contains original CAE runtime code and selected guides, with no runtime dependencies, install hooks or bundled native binaries.
+Requires Node.js **22.16+** and npm. Native integration also requires your existing Codex installation and normal login. The package contains original CAE runtime code with no runtime dependencies, install hooks or bundled native binaries.
+
+The unreleased source package also includes all linked public documentation and the original synthetic validation evidence. Its installed links are checked offline. The first published archive contains selected guides only; use the [online documentation](https://github.com/ppxu/codex-adaptive-effort/tree/main/docs) if a local documentation link is missing. See [troubleshooting](TROUBLESHOOTING.md) for setup and control errors.
 
 ## Package availability
 
@@ -47,7 +49,7 @@ cae desktop stop
 
 The first launch creates `.cae/desktop/config.json`. Later starts can omit `--model` and reuse that configuration. Startup is foreground and still enforces native signature/version/capability/provider checks. Use a new local chat in the experimental window. Default mode is shadow with the baseline evaluator; Jev remains separately opt-in. Starting the launcher does not submit a task. Sending a task uses the normal model allowance.
 
-For CLI integration, follow [local validation](LOCAL_VALIDATION.md), replacing `node bin/cae.mjs` with `cae`. The [desktop guide](DESKTOP_LAUNCHER.md) uses the same substitution for manual controls, Jev opt-in and recovery. No repository checkout is needed after installation.
+For CLI integration, follow [local validation](LOCAL_VALIDATION.md). The [desktop guide](DESKTOP_LAUNCHER.md) covers manual controls, Jev opt-in and recovery. Both use the installed `cae` command; no repository checkout is needed.
 
 ## Upgrade, remove or install a local archive
 

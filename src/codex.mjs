@@ -7,6 +7,29 @@ import { VERSION } from './version.mjs';
 export function nativeEnvironment(source = process.env) {
   const env = { ...source }; delete env.TYPESAFE_API_KEY; return env;
 }
+/** Forward supervisor signals and reap only this owned child before returning. */
+export function waitForNative(child, { signals = process, killTimeoutMs = 1000 } = {}) {
+  return new Promise((resolveExit, reject) => {
+    let timer;
+    const stop = signal => {
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      child.kill(signal);
+      timer ??= setTimeout(() => {
+        if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+      }, killTimeoutMs);
+      timer.unref();
+    };
+    const interrupt = () => stop('SIGINT'), terminate = () => stop('SIGTERM');
+    function cleanup() {
+      clearTimeout(timer); signals.off('SIGINT', interrupt); signals.off('SIGTERM', terminate);
+    }
+    signals.on('SIGINT', interrupt); signals.on('SIGTERM', terminate);
+    child.once('error', () => { cleanup(); reject(new CaeError('codex_not_available')); });
+    child.once('exit', (code, signal) => {
+      cleanup(); resolveExit(code ?? (signal === 'SIGINT' ? 130 : signal === 'SIGTERM' ? 143 : 1));
+    });
+  });
+}
 export function doctor(binary = 'codex') {
   const check = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 5000, windowsHide: true, env: nativeEnvironment() });
   return { node: process.version, platform: process.platform, architecture: process.arch,

@@ -16,6 +16,8 @@ No automatic upstream retries or redirect following. Generated launcher configur
 
 Metadata-only audit files are 0600 on POSIX. Only explicitly allowlisted fields are written; request bodies and provider error bodies are not logged. `status` includes `auditHealthy`; a logging failure does not break the model stream. There is no log rotation in this alpha. Windows ACL and cross-user confidentiality require local validation; POSIX modes are not Windows ACL guarantees.
 
+Forwarding saturation does not consume the separate authenticated health/control slots. Audit reports process logs incrementally; malformed lines are counted, and evaluator attempts without a finish record retain unknown usage. These controls and reporting fixes are unreleased source changes after `0.1.0-alpha.1`.
+
 Some unsupported histories bypass adaptation but still go to the original executor. `off` is not network isolation and still uses the proxy. If the proxy crashes, end the experimental session and relaunch ordinary Codex; there is no background config rewrite or automatic direct-routing promise.
 
 ## Supported versions

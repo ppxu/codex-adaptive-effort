@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { loadConfig, readLocalToken } from '../src/config.mjs';
-import { codexArgs } from '../src/codex.mjs';
+import { codexArgs, waitForNative } from '../src/codex.mjs';
 import { verifyDesktopProvider, desktopControl } from '../src/desktop.mjs';
 import { CaeError } from '../src/util.mjs';
 
@@ -29,11 +29,7 @@ async function main() {
     env.CAE_LOCAL_TOKEN = readLocalToken(config.tokenFile);
   }
   const child = spawn(binary, args, { env, stdio: 'inherit' });
-  let timer;
-  const stop = () => { child.kill('SIGTERM'); timer ??= setTimeout(() => child.kill('SIGKILL'), 1000); timer.unref(); };
-  process.once('SIGTERM', stop); process.once('SIGINT', stop);
-  child.once('error', () => { console.error('CAE: codex_not_available'); process.exitCode = 1; });
-  child.once('exit', code => { clearTimeout(timer); process.off('SIGTERM', stop); process.off('SIGINT', stop); process.exitCode = code ?? 1; });
+  process.exitCode = await waitForNative(child);
 }
 main().catch(error => {
   console.error(`CAE: ${error instanceof CaeError ? error.code : 'desktop_bridge_failed'}`);

@@ -11,6 +11,26 @@ import { once } from 'node:events';
 import { config, body, completedSse, eventually } from './helpers.mjs';
 const runFile = promisify(execFile), cli = fileURLToPath(new URL('../bin/cae.mjs', import.meta.url));
 
+test('CLI rejects unknown commands, missing operands and ignored arguments before reading config', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'cae-args-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  for (const args of [['typo'], ['status', 'extra'], ['control'], ['control', 'AUTO'], ['lock'], ['unlock', 'low'],
+    ['serve', 'extra'], ['init', '--', 'ignored'], ['probe', 'ignored']]) {
+    await assert.rejects(runFile(process.execPath, [cli, ...args], { cwd: dir, timeout: 5000 }), e =>
+      e.code === 1 && /unknown_command|invalid_arguments|invalid_mode|missing_effort/.test(e.stderr) && !e.stderr.includes('cannot_read_config'));
+  }
+});
+test('CLI distinguishes invalid tokens from connection failures without echoing private inputs', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'cae-hints-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  writeFileSync(join(dir, 'config.json'), JSON.stringify(config({ port: 0 })));
+  writeFileSync(join(dir, 'local.key'), 'synthetic-invalid-private-key', { mode: 0o600 });
+  const run = (...args) => runFile(process.execPath, [cli, ...args, '--config', 'config.json'], { cwd: dir, timeout: 5000 });
+  await assert.rejects(run('status'), e => /invalid_or_insecure_local_token/.test(e.stderr) && !e.stderr.includes('synthetic-invalid-private-key'));
+  writeFileSync(join(dir, 'local.key'), 'd'.repeat(64));
+  await assert.rejects(run('status'), e => /local_proxy_unreachable/.test(e.stderr) && /Hint:/.test(e.stderr) && !e.stderr.includes('d'.repeat(64)));
+  await assert.rejects(run('report'), e => /cannot_read_log/.test(e.stderr) && /Hint:/.test(e.stderr));
+  await assert.rejects(run('--synthetic-private-option=value'), e => /invalid_arguments/.test(e.stderr) && !e.stderr.includes('synthetic-private-option'));
+});
+
 test('actual CLI serve/status/control/lock/report/stop pipeline is executable', async t => {
   const dir = mkdtempSync(join(tmpdir(), 'cae-cli-')); let child; let stderr = '';
   const observed = [];
@@ -34,6 +54,7 @@ test('actual CLI serve/status/control/lock/report/stop pipeline is executable', 
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...c, port }));
   const run = async (...args) => JSON.parse((await runFile(process.execPath, [cli, ...args, '--config', 'config.json'], { cwd: dir, timeout: 5000 })).stdout);
   const status = await run('status'); assert.equal(status.mode, 'shadow'); assert.equal(status.auditHealthy, true);
+  await assert.rejects(run('lock', 'unsupported'), e => /unsupported_lock/.test(e.stderr) && /supportedEfforts/.test(e.stderr));
   await run('control', 'auto'); await run('lock', 'low');
   const r = await fetch(`http://127.0.0.1:${port}/v1/responses`, { method: 'POST',
     headers: { 'content-type': 'application/json', 'x-cae-token': 'c'.repeat(64) }, body: JSON.stringify(body()) });

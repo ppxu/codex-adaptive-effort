@@ -4,11 +4,11 @@ Validate in a separate process and a directory containing only synthetic, non-se
 
 ## 1. Offline checks and native metadata
 
+The commands below use the [npm-installed CLI](NPM.md). From a source checkout, first run `npm ci --ignore-scripts`, `npm run verify` and `npm link --ignore-scripts`; native experiments still use a separate non-sensitive working directory.
+
 ```bash
-npm ci --ignore-scripts
-npm run verify
-node bin/cae.mjs doctor
-node bin/cae.mjs probe > capabilities.local.json
+cae doctor
+cae probe > capabilities.local.json
 ```
 
 The tests and demo do not use real providers. `doctor` queries the native version; `probe` initializes app-server and queries `model/list` without generating output. Native Codex may consult online model metadata. If the CLI is absent from `PATH`, pass `--codex /path/to/trusted/codex` to doctor/probe and subsequent CLI launches. Do not replace or upgrade the desktop binary to make a check pass.
@@ -20,8 +20,8 @@ Record the source commit, time, OS/architecture, Node version, trusted CLI path/
 Choose a real model from the capture. `$MODEL_ID` below means the exact value you selected:
 
 ```bash
-node bin/cae.mjs init --model "$MODEL_ID" --auth chatgpt --capabilities capabilities.local.json
-node bin/cae.mjs launch-args --auth chatgpt
+cae init --model "$MODEL_ID" --auth chatgpt --capabilities capabilities.local.json
+cae launch-args --auth chatgpt
 ```
 
 Initialization refuses to overwrite `.cae`. For another experiment use `--dir PATH` and pass `--config PATH/config.json` to later commands. CAE's directory is not a replacement Codex home. Native Codex continues to handle login.
@@ -32,13 +32,14 @@ Review the printed non-secret arguments: fixed model, local Responses URL, auth 
 
 ## 3. Off transport trial
 
-Real requests need explicit authorization. Set `mode` to `off` in the isolated CAE configuration before starting. Leave normal Codex settings unchanged.
+Real requests need explicit authorization. Start the proxy, then explicitly switch it off before launching the experimental CLI. Leave normal Codex settings unchanged.
 
 ```bash
 # Terminal A: foreground proxy
-node bin/cae.mjs serve --enable-upstream
-# Terminal B: experimental CLI, retaining native authentication
-node bin/cae.mjs codex --auth chatgpt --
+cae serve --enable-upstream
+# Terminal B: turn adaptation off before launching the experimental CLI
+cae control off
+cae codex --auth chatgpt --
 ```
 
 Submit a minimal synthetic text task, then test a read-only tool in the synthetic directory, a follow-up, cancellation and recovery. Off disables evaluation/changes, not model usage or network forwarding. Record errors such as 401/403 or protocol failures; do not export cookies, change billing routes or hide retries.
@@ -48,14 +49,14 @@ Submit a minimal synthetic text task, then test a read-only tool in the syntheti
 Use efforts confirmed by the probe. The following values are examples, not universal capabilities:
 
 ```bash
-node bin/cae.mjs lock low
-node bin/cae.mjs control auto
+cae lock low
+cae control auto
 # Send an eligible synthetic text task and wait for completion.
-node bin/cae.mjs lock high
+cae lock high
 # Send another eligible task and wait for completion.
-node bin/cae.mjs control off
-node bin/cae.mjs unlock
-node bin/cae.mjs report
+cae control off
+cae unlock
+cae report
 ```
 
 Correlate prepared/sent/completed events. Unsupported shapes, including structured tool-result history, can bypass even a manual lock. Do not remove history to force eligibility. A request sent with a value does not prove the model's actual reasoning allocation.
@@ -67,7 +68,7 @@ Jev sends bounded task text to TypeSafe and may incur usage. Enable it only with
 For a standalone serve process: stop the proxy, set `judge.kind` to `typesafe` and `mode` to `shadow` in the isolated configuration, supply `TYPESAFE_API_KEY` through your normal environment setup, then run:
 
 ```bash
-node bin/cae.mjs serve --enable-upstream --enable-jev
+cae serve --enable-upstream --enable-jev
 ```
 
 Use a small configured `judge.maxCalls` budget. First verify shadow recommendations and fallback. With separate authorization to change effort, use `control auto`. The [desktop launcher](DESKTOP_LAUNCHER.md) has its own process-only flags, eight-call cap and timeout experiment; do not assume standalone serve uses those desktop caps.
