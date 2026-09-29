@@ -16,6 +16,8 @@ The two added tests enforce an explicit runtime allowlist without lifecycle hook
 
 No registry publication, real model/Jev call or native desktop launch was performed. Package installation is distinct from native compatibility acceptance. See [npm usage](NPM.md) and [release steps](PUBLISHING.md); the new commit requires its own CI result.
 
+The first package CI run on `8d7453a5d920fa433681cdfec3a4b30030c3dec8` exposed a Windows checkout issue: Git produced CRLF executable shebangs and npm normalized the installed CLI's first line, failing the byte-preservation assertion on both Node versions. Executable entry points now have explicit LF checkout attributes; the assertion remains strict and the package test also checks shebang line endings. Linux/macOS passed that initial run. Use the follow-up commit's CI to establish the repaired Windows result.
+
 ## Code quality review — 2026-09-28
 
 Against baseline `1f3b4e205da4603c7aac1d066fa1c82b691cbd4d` plus the fixes accompanying this record, `npm run verify` passed **212 tests** on macOS 27.0 arm64 / Node v24.16.0, with no failures, cancellations or skips. Eight focused regressions first reproduced defects in the baseline implementation. The public-source scan, syntax/JSON checks and offline demo passed. No real model or Jev calls were made; native compatibility was not revalidated. See the [review findings and scope](CODE_REVIEW_2026-09-28.md). Check this revision's exact CI SHA separately.

@@ -13,6 +13,8 @@ test('npm manifest has a complete explicit runtime allowlist and no lifecycle ho
   assert.notEqual(pkg.private, true); assert.equal(pkg.publishConfig.tag, 'alpha');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.bin.cae, './bin/cae.mjs');
+  for (const file of readdirSync(join(root, 'bin')).filter(f => f.endsWith('.mjs')))
+    assert(!readFileSync(join(root, 'bin', file), 'utf8').split('\n')[0].includes('\r'), `Executable shebang must use LF: ${file}`);
   for (const file of pkg.files) assert.match(file, /^(?:bin|src|docs)\/[A-Za-z0-9_.-]+$|^[A-Za-z0-9_.-]+$/);
   for (const dir of ['bin', 'src']) for (const file of readdirSync(join(root, dir)).filter(f => f.endsWith('.mjs')))
     assert(pkg.files.includes(`${dir}/${file}`), `Runtime file missing from npm package: ${dir}/${file}`);

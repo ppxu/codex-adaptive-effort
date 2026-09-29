@@ -1,0 +1,2 @@
+# Keep npm executable entry points portable across Git checkout platforms.
+bin/*.mjs text eol=lf
