@@ -8,6 +8,14 @@ The runtime source `f346ffcf30ba4f6c34a9027b6ff585c8a42a5674` passed 199 tests o
 
 Use [local acceptance](LOCAL_ACCEPTANCE.md) for real native/model evidence and [limitations](LIMITATIONS.md) for untested boundaries. The [desktop record](DESKTOP_ACCEPTANCE.md) and [Jev record](JEV_SHADOW_ACCEPTANCE.md) separate actual transport from evaluator-only and shadow tests.
 
+## npm package preparation — 2026-09-29
+
+Against baseline `c53b588f16cac5b0a32a613f50634dca6cecc1fa` plus this package change, `npm ci --ignore-scripts` and `npm run verify` passed locally on macOS 27.0 arm64 / Node v24.16.0 with npm 11.18.0: **214 tests**, zero failures, cancellations or skips, plus syntax/JSON checks and the offline demo.
+
+The two added tests enforce an explicit runtime allowlist without lifecycle hooks/dependencies, then use real `npm pack` and `npm install --global --prefix <temporary directory>` in offline mode with empty npm user/global configs. They inspect archives from both synthetic staging and the actual checkout, then verify byte-identical installed files, the actual `cae` command shim, package version/help, synthetic initialization and launch arguments, and the desktop entry point's authorization gate. Synthetic private sentinel files placed both at the package root and under source/docs are excluded. The user's global npm installation is not changed.
+
+No registry publication, real model/Jev call or native desktop launch was performed. Package installation is distinct from native compatibility acceptance. See [npm usage](NPM.md) and [release steps](PUBLISHING.md); the new commit requires its own CI result.
+
 ## Code quality review — 2026-09-28
 
 Against baseline `1f3b4e205da4603c7aac1d066fa1c82b691cbd4d` plus the fixes accompanying this record, `npm run verify` passed **212 tests** on macOS 27.0 arm64 / Node v24.16.0, with no failures, cancellations or skips. Eight focused regressions first reproduced defects in the baseline implementation. The public-source scan, syntax/JSON checks and offline demo passed. No real model or Jev calls were made; native compatibility was not revalidated. See the [review findings and scope](CODE_REVIEW_2026-09-28.md). Check this revision's exact CI SHA separately.

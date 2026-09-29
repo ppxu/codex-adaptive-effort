@@ -6,6 +6,7 @@ English is the default documentation language. Start with the [project overview]
 
 | Document | Purpose |
 | --- | --- |
+| [npm installation](NPM.md) | Install the command, choose a working directory, upgrade and uninstall |
 | [CLI validation](LOCAL_VALIDATION.md) | Discover capabilities, keep native auth, verify off/manual/shadow/auto in order |
 | [Desktop launcher](DESKTOP_LAUNCHER.md) | Supported version, isolated startup, Jev controls and recovery |
 | [Known limitations](LIMITATIONS.md) | Compatibility, privacy, reliability and measurement boundaries |

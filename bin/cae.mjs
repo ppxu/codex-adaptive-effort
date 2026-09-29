@@ -10,9 +10,11 @@ import { BaselineJudge, TypeSafeJudge } from '../src/judge.mjs';
 import { Audit, report } from '../src/audit.mjs';
 import { startProxy } from '../src/proxy.mjs';
 import { doctor, probeModels, codexArgs } from '../src/codex.mjs';
+import { VERSION } from '../src/version.mjs';
 
-const HELP = `Codex Adaptive Effort 0.1.0-alpha.1 (Node >=22.16; no dependencies)
+const HELP = `Codex Adaptive Effort ${VERSION} (Node >=22.16; no dependencies)
 
+  cae --version / -V                       Print installed package version
   cae doctor [--codex PATH]                 No credentials or network read by CAE
   cae probe [--codex PATH]                  Native initialize + model/list only
   cae init --model ID --auth chatgpt|api --capabilities FILE [--baseline EFFORT]
@@ -50,7 +52,7 @@ async function main() {
   const passthrough = dash < 0 ? [] : input.slice(dash + 1);
   const { values: v, positionals: p } = parseArgs({ args: dash < 0 ? input : input.slice(0, dash),
     allowPositionals: true, strict: true, options: {
-      help: { type: 'boolean', short: 'h' }, config: { type: 'string', default: '.cae/config.json' },
+      help: { type: 'boolean', short: 'h' }, version: { type: 'boolean', short: 'V' }, config: { type: 'string', default: '.cae/config.json' },
       dir: { type: 'string', default: '.cae' }, model: { type: 'string' }, efforts: { type: 'string' },
       baseline: { type: 'string' }, auth: { type: 'string' }, capabilities: { type: 'string' },
       codex: { type: 'string', default: 'codex' }, 'enable-upstream': { type: 'boolean' }, 'enable-jev': { type: 'boolean' },
@@ -59,6 +61,7 @@ async function main() {
       'jev-timeout-ms': { type: 'string' },
     } });
   const command = p[0];
+  if (v.version) { print(VERSION); return; }
   if (!command || v.help) { print(HELP); return; }
   if (v['allow-jev-auto'] && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_auto_start_only');
   if (v['jev-timeout-ms'] !== undefined && (command !== 'desktop' || p[1] !== 'start')) throw new CaeError('desktop_timeout_start_only');

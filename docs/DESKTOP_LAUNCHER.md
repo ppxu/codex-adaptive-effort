@@ -10,7 +10,7 @@ The experimental instance uses its own Electron data directory but shares native
 
 ## Start with baseline shadow
 
-From the repository root, use a model ID returned by the [native probe](LOCAL_VALIDATION.md):
+After [npm installation](NPM.md), replace `node bin/cae.mjs` in this guide with `cae` and use your chosen working directory in every terminal. When running from source, use the repository root. Select a model ID returned by the [native probe](LOCAL_VALIDATION.md):
 
 ```bash
 node bin/cae.mjs desktop start --model "$MODEL_ID" --auth chatgpt --enable-upstream

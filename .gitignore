@@ -10,6 +10,7 @@ coverage/
 *.key
 *.pem
 *.zip
+*.tgz
 *.local.json
 *.local.md
 *.local.txt
